@@ -1,0 +1,19 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>MainForm.ui.qml</file>
+        <file>TasksView.ui.qml</file>
+        <file>TaskDelegate.ui.qml</file>
+        <file>ConnectionForm.ui.qml</file>
+        <file>LogView.ui.qml</file>
+        <file>TaskEditor.ui.qml</file>
+        <file>SureDialog.qml</file>
+        <file>TaskDialog.ui.qml</file>
+        <file>SignButton.qml</file>
+        <file>ConnectionEditor.ui.qml</file>
+        <file>ConnectionDialog.ui.qml</file>
+        <file>PingButton.ui.qml</file>
+        <file>HeaderLabel.ui.qml</file>
+        <file>LaunchButton.ui.qml</file>
+    </qresource>
+</RCC>
