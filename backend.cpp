@@ -253,6 +253,7 @@ void Connection::queryList()
 
 void Connection::launch(Task *task)
 {
+    task->setState(Task::Wait);
     QString id = "#" + QUuid::createUuid().toString();
     task->setId(id);
     QString data = QString(task->useRos() ? "roslaunch %1 %2 %3" : "launch %1 %2 %3").arg(listenPort_).arg(id).arg(task->command());

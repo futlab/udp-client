@@ -22,7 +22,7 @@ class Task : public QObject
 public:
     Task(QObject *parent = nullptr) : QObject(parent) {}
     Task(const QString &name, bool userRos, const QString &command, QObject *parent = nullptr);
-    enum State { Stop, Active, Error };
+    enum State { Stop, Wait, Active, Error };
     QString name() const { return name_; }
     QString log() const { return log_; }
     void clearLog() { log_ = ""; }

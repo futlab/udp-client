@@ -3,7 +3,6 @@
 #include <QQuickStyle>
 
 #include "backend.h"
-#include "tasklistmodel.h"
 
 int main(int argc, char *argv[])
 {

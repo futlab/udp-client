@@ -21,6 +21,14 @@ Button {
             }
         },
         State {
+            name: "wait"
+            when: state === Task.Wait
+            PropertyChanges {
+                target: launchButton
+                Material.background: Material.Amber
+            }
+        },
+        State {
             name: "error"
             when: state === Task.Error
             PropertyChanges {
