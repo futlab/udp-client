@@ -339,6 +339,7 @@ void Connection::setListenPort(int listenPort)
 void Connection::bind()
 {
     QHostAddress a = (listenIf_ == "Any") ? QHostAddress::Any : QHostAddress(listenIf_);
+    if (socket_.state() != QAbstractSocket::UnconnectedState) socket_.abort();
     setState(socket_.bind(a, listenPort_) ? Active : Error);
 }
 
