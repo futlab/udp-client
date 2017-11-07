@@ -8,7 +8,7 @@ Pane {
     id: connectionForm
     property BackEnd backend
     property var interfaces: backend.interfaces
-    property Connection currentConnection
+    property Connection currentConnection: backend.connections[comboBox.currentIndex];
     property int listenPortCtr: 5555
     //width: 346
     property bool expanded: false
@@ -30,8 +30,7 @@ Pane {
                 width: 200
                 textRole: "name"
                 model: backend.connections
-                onCurrentIndexChanged: connectionForm.currentConnection
-                                       = backend.connections[comboBox.currentIndex]
+                currentIndex: backend.connectionIndex
             }
 
             PingButton {
@@ -43,6 +42,19 @@ Pane {
             Item {
                 id: item1
                 Layout.fillWidth: true
+                Layout.fillHeight: true
+                Label {
+                    text: "Unable to bind"
+                    //Layout.fillHeight: true
+                    color: "red"
+                    anchors.fill: parent
+                    verticalAlignment: Text.AlignVCenter//currentConnection.errorMessage
+                    visible: currentConnection && currentConnection.state === Connection.Error
+                }
+                CheckBox {
+                    text: "Autoping"
+                    visible: currentConnection && currentConnection.state !== Connection.Error
+                }
             }
 
             SignButton {
@@ -114,6 +126,14 @@ Pane {
             ne.address = ''
             ne.port = ''
             comboBox.currentIndex = i
+        }
+    }
+
+    Connections {
+        target: comboBox
+        onCurrentIndexChanged: {
+            connectionForm.currentConnection = backend.connections[comboBox.currentIndex];
+            backend.connectionIndex = comboBox.currentIndex;
         }
     }
 

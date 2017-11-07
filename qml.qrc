@@ -15,5 +15,6 @@
         <file>PingButton.ui.qml</file>
         <file>HeaderLabel.ui.qml</file>
         <file>LaunchButton.ui.qml</file>
+        <file>EditableComboBox.ui.qml</file>
     </qresource>
 </RCC>

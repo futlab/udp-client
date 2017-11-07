@@ -8,36 +8,37 @@ import udp_client.backend 1.0
 Button {
     id: pingButton
     property Connection connection
-    onConnectionChanged: pingButton.state = ""
     text: qsTr("PING")
 
     Connections {
         target: pingButton
-        onClicked: {
-            pingButton.state = "fail"
-            connection.ping();
-        }
-    }
-    Connections {
-        target: connection
-        onPingOk: pingButton.state = "ok"
+        onClicked: connection.ping();
     }
 
     states: [
         State {
             name: "ok"
+            when: connection.state === Connection.Pinged
             PropertyChanges {
                 target: pingButton
-                //Material.background: Material.Green
                 highlighted: true
             }
-
         },
         State {
             name: "fail"
+            when: connection.state === Connection.Wait
             PropertyChanges {
                 target: pingButton
                 Material.background: Material.Red
+            }
+        },
+        State {
+            name: "error"
+            when: connection.state === Connection.Error
+            PropertyChanges {
+                target: pingButton
+                enabled: false
+                Material.background: Material.Black
             }
         }
     ]

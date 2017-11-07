@@ -8,9 +8,9 @@ GridLayout {
     property alias name: nameField.text
     property alias useRos: useRosSwitch.checked
     property alias command: commandField.text
-    property alias launchFile: launchFileBox.editText
+    property alias launchFile: launchFileBox.text
     //property string launchFile
-    property var launchFiles: connection ? connection.launchFiles : []
+    property var launchFiles: connection ? connection.launchFiles : undefined
     property Connection connection
     rows: 4
     columns: 2
@@ -37,23 +37,21 @@ GridLayout {
         text: 'ROS launch file'
         enabled: useRos
     }
-    ComboBox {
+    EditableComboBox {
         id: launchFileBox
-        editable: true
-        //editText: "AAAAAAAAAAAAAAAAAA"
         enabled: useRos
         Layout.minimumWidth: 180
         Layout.fillWidth: true
-        //model: editor.launchFiles
-
+        model: connection ? connection.launchFiles : []
     }
 
     HeaderLabel {
         text: 'Command'
+        enabled: !useRos
     }
     TextField {
         id: commandField
-        readOnly: useRos
+        enabled: !useRos
         Layout.minimumWidth: 180
         Layout.fillWidth: true
     }
@@ -61,22 +59,14 @@ GridLayout {
     Connections {
         target: editor
         onUseRosChanged: if (useRos) {
-                        if (connection) connection.queryList();
-                        editor.command = 'roslaunch ' + launchFileBox.currentText;
-                   }
+                             if (connection)
+                                 connection.queryList()
+                         }
     }
 
     Connections {
         target: launchFileBox
         onDownChanged: if (useRos)
-                           connection.queryList();
-    }
-
-    Connections {
-        target: launchFileBox
-        onCurrentTextChanged: {
-            editor.command = 'roslaunch ' + launchFileBox.currentText;
-            //launchFile = launchFileBox.currentText;
-        }
+                           connection.queryList()
     }
 }

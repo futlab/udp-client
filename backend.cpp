@@ -24,10 +24,10 @@ void BackEnd::removeTask(int idx)
     emit tasksChanged(tasks());
 }
 
-int BackEnd::appendTask(const QString &name, bool useRos, const QString &command)
+int BackEnd::appendTask(const QString &name, bool useRos, const QString &command, const QString &launchFile)
 {
     int r = tasks_.length();
-    auto t = new Task(name, useRos, command);
+    auto t = new Task(name, useRos, command, launchFile);
     tasks_.append(t);
     emit tasksChanged(tasks());
     return r;
@@ -36,6 +36,7 @@ int BackEnd::appendTask(const QString &name, bool useRos, const QString &command
 BackEnd::BackEnd(QObject *parent) : QObject(parent)
 {
     QSettings settings("Futlab", "UDP client");
+    connectionIndex_ = settings.value("connectionIndex", QVariant(-1)).toInt();
     int l = settings.beginReadArray("connections");
     for (int i = 0; i < l; ++i) {
         settings.setArrayIndex(i);
@@ -56,7 +57,9 @@ BackEnd::BackEnd(QObject *parent) : QObject(parent)
         Task * t = new Task(
                     settings.value("name").toString(),
                     settings.value("useRos").toBool(),
-                    settings.value("command").toString());
+                    settings.value("command").toString(),
+                    settings.value("launchFile").toString(),
+                    this);
         tasks_.append(t);
     }
     settings.endArray();
@@ -65,6 +68,7 @@ BackEnd::BackEnd(QObject *parent) : QObject(parent)
 BackEnd::~BackEnd()
 {
     QSettings settings("Futlab", "UDP client");
+    settings.setValue("connectionIndex", connectionIndex_);
     int l = connections_.length();
     settings.beginWriteArray("connections", l);
     for (int i = 0; i < l ; ++i) {
@@ -86,13 +90,9 @@ BackEnd::~BackEnd()
         settings.setValue("name",       t->name());
         settings.setValue("useRos",     t->useRos());
         settings.setValue("command",    t->command());
+        settings.setValue("launchFile", t->launchFile());
     }
     settings.endArray();
-}
-
-QString BackEnd::targetAddress()
-{
-    return targetAddress_;
 }
 
 Task *BackEnd::taskById(const QStringRef &id)
@@ -101,13 +101,6 @@ Task *BackEnd::taskById(const QStringRef &id)
         if (t->id() == id)
             return t;
     return nullptr;
-}
-
-void BackEnd::setTargetAddress(const QString &targetAddress)
-{
-    if (targetAddress == targetAddress_) return;
-    targetAddress_ = targetAddress;
-    emit targetAddressChanged();
 }
 
 QQmlListProperty<Task> BackEnd::tasks()
@@ -143,6 +136,13 @@ QStringList BackEnd::interfaces() const
         }
     }
     return r;
+}
+
+void BackEnd::setConnectionIndex(int connectionIndex)
+{
+    if (connectionIndex_ == connectionIndex) return;
+    connectionIndex_ = connectionIndex;
+    emit connectionIndexChanged(connectionIndex_);
 }
 
 // static Connections handlers
@@ -187,9 +187,18 @@ int BackEnd::taskCount(QQmlListProperty<Task> *list)
     return reinterpret_cast<BackEnd*>(list->data)->tasks_.length();
 }
 
-Task::Task(const QString &name, bool useRos, const QString &command, QObject *parent) :
-    QObject(parent), name_(name), command_(command), state_(Stop), useRos_(useRos)
-{}
+Task::Task(QObject *parent) : QObject(parent)
+{
+}
+
+Task::Task(const QString &name, bool useRos, const QString &command, const QString &launchFile, QObject *parent) :
+    QObject(parent), name_(name), command_(command), launchFile_(launchFile), state_(Stop), useRos_(useRos)
+{
+}
+
+Task::~Task()
+{
+}
 
 void Task::logLine(const QStringRef &ref)
 {
@@ -237,8 +246,16 @@ void Task::setId(QString id)
     emit idChanged(id_);
 }
 
+void Task::setLaunchFile(QString launchFile)
+{
+    if (launchFile_ == launchFile) return;
+    launchFile_ = launchFile;
+    emit launchFileChanged(launchFile_);
+}
+
 void Connection::ping()
 {
+    setState(Wait);
     QString data = QString("ping %1").arg(listenPort_);
     QHostAddress address(address_);
     socket_.writeDatagram(data.toLocal8Bit(), address, port_);
@@ -253,21 +270,41 @@ void Connection::queryList()
 
 void Connection::launch(Task *task)
 {
+    task->clearLog();
     task->setState(Task::Wait);
     QString id = "#" + QUuid::createUuid().toString();
     task->setId(id);
-    QString data = QString(task->useRos() ? "roslaunch %1 %2 %3" : "launch %1 %2 %3").arg(listenPort_).arg(id).arg(task->command());
-    QHostAddress address(address_);
-    socket_.writeDatagram(data.toLocal8Bit(), address, port_);
+    QString param = task->useRos() ? task->launchFile() : task->command();
+    param.replace("#remote", address_);
+    param.replace("#local", this->listenIf_);
+    QString data = QString(task->useRos() ? "roslaunch %1 %2 %3" : "launch %1 %2 %3").arg(listenPort_).arg(id).arg(param);
+    socket_.writeDatagram(data.toLocal8Bit(), QHostAddress(address_), port_);
 }
 
-Connection::Connection(QObject *parent) : QObject(parent), backend_(nullptr) {}
+void Connection::stop(Task *task)
+{
+    QString data = QString("stop %1").arg(task->id());
+    socket_.writeDatagram(data.toLocal8Bit(), QHostAddress(address_), port_);
+}
+
+void Connection::kill(Task *task)
+{
+    QString data = QString("kill %1").arg(task->id());
+    socket_.writeDatagram(data.toLocal8Bit(), QHostAddress(address_), port_);
+}
+
+Connection::Connection(QObject *parent) : QObject(parent), backend_(nullptr), state_(Active) {
+}
 
 Connection::Connection(const QString &name, const QString &address, int port, const QString &listenIf, int listenPort, BackEnd *parent) :
     QObject(parent), name_(name), address_(address), listenIf_(listenIf), port_(port), listenPort_(listenPort), backend_(parent)
 {
     connect(&socket_, SIGNAL(readyRead()), SLOT(read()));
     bind();
+}
+
+Connection::~Connection()
+{
 }
 
 void Connection::setName(QString name)
@@ -302,8 +339,14 @@ void Connection::setListenPort(int listenPort)
 void Connection::bind()
 {
     QHostAddress a = (listenIf_ == "Any") ? QHostAddress::Any : QHostAddress(listenIf_);
-    if(!socket_.bind(a, listenPort_))
-        printf("Unable to bind");
+    setState(socket_.bind(a, listenPort_) ? Active : Error);
+}
+
+void Connection::setState(State state)
+{
+    if (state == state_) return;
+    state_ = state;
+    emit stateChanged(state);
 }
 
 class WordParser
@@ -336,9 +379,10 @@ void Connection::read()
     QStringRef head = args.get();
     if (head.isEmpty()) return;
 
-    if (head == "OK")
+    if (head == "OK") {
+        setState(Pinged);
         emit pingOk(args.get().toString(), args.get().toString());
-    else if (head == "LIST") {
+    } else if (head == "LIST") {
         launchFiles_.clear();
         QStringRef ref;
         while ((ref = args.get()) != "")

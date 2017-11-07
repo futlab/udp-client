@@ -77,12 +77,13 @@ ItemDelegate {
                     id: taskEditor
                     connection: delegate.connection
                     name: model.name
+                    onNameChanged: modelData.name = name
                     useRos: model.useRos
                     onUseRosChanged: modelData.useRos = useRos
-                    command: useRos ? "roslaunch " + model.command : model.command
-                    onCommandChanged: if (!useRos) modelData.command = command
-                    launchFile: useRos ? model.command : ""
-                    onLaunchFileChanged: if (useRos) modelData.command = launchFile
+                    command: model.command
+                    onCommandChanged: modelData.command = command
+                    launchFile: model.launchFile
+                    onLaunchFileChanged: modelData.launchFile = launchFile
                 }
             }
         }
@@ -95,7 +96,10 @@ ItemDelegate {
 
     Connections {
         target: launchButton
-        onClicked: connection.launch(modelData)
+        onClicked: if (modelData.state === Task.Active)
+                       connection.stop(modelData)
+                   else
+                       connection.launch(modelData)
     }
     states: [
         State {

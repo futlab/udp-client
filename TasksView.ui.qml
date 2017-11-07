@@ -22,8 +22,8 @@ ListView {
         Connections {
             target: delegate
             onRemoveTask: {
-                sureDialog.visible = true;
-                view.taskIndex = index;
+                sureDialog.visible = true
+                view.taskIndex = index
             }
         }
     }
@@ -53,8 +53,8 @@ ListView {
     Connections {
         target: newDialog
         onAccepted: {
-            var e = newDialog.editor;
-            backend.appendTask(e.name, e.useRos, e.useRos ? e.launchFile : e.command);
+            var e = newDialog.editor
+            backend.appendTask(e.name, e.useRos, e.command, e.launchFile)
         }
     }
 
