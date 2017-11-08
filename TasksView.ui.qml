@@ -18,6 +18,7 @@ ListView {
         z: 1
         width: view.width
         connection: view.connection
+        expanded: index === taskIndex
 
         Connections {
             target: delegate
@@ -25,6 +26,11 @@ ListView {
                 sureDialog.visible = true
                 view.taskIndex = index
             }
+        }
+        Connections {
+            target: delegate
+            onExpand: if (delegate.expanded) view.taskIndex = -1;
+                      else view.taskIndex = index
         }
     }
     SignButton {

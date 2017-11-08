@@ -10,6 +10,7 @@ ItemDelegate {
     property bool expanded: false
     property Connection connection
     signal removeTask
+    signal expand
 
     contentItem: ColumnLayout {
         spacing: 10
@@ -24,8 +25,8 @@ ItemDelegate {
             }
             TabBar {
                 id: bar
+                visible: false
                 currentIndex: 1
-                visible: delegate.expanded
                 TabButton {
                     id: tabButton
                     width: 100
@@ -47,7 +48,6 @@ ItemDelegate {
                 text: "▼"
                 highlighted: false
                 Layout.alignment: Qt.AlignRight
-                onClicked: delegate.expanded = !delegate.expanded
             }
             SignButton {
                 id: removeButton
@@ -101,12 +101,22 @@ ItemDelegate {
                    else
                        connection.launch(modelData)
     }
+
+    Connections {
+        target: expandButton
+        onClicked: expand()
+    }
+
     states: [
         State {
             name: "expanded"
-            when: delegate.expanded
+            when: expanded
             PropertyChanges {
                 target: content
+                visible: true
+            }
+            PropertyChanges {
+                target: bar
                 visible: true
             }
             PropertyChanges {
