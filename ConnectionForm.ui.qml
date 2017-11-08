@@ -106,6 +106,8 @@ Pane {
         onClicked: {
             var ne = newDialog.editor
             ne.listenPort = listenPortCtr++
+            ne.name = ''
+            ne.address = ''
             newDialog.visible = true
         }
     }

@@ -7,9 +7,9 @@ GridLayout {
     id: editor
     property alias listenIfIdx: listenIfBox.currentIndex
     property var interfaces
-    property alias listenPort: listenPortField.text
+    property alias listenPort: listenPortField.value
     property alias name: nameField.text
-    property alias port: portField.text
+    property alias port: portField.value
     property alias address: addressField.text
     Layout.fillWidth: true
     property bool enabled: true
@@ -38,12 +38,14 @@ GridLayout {
     }
 
     HeaderLabel { text: qsTr("Port") }
-    TextField {
+    SpinBox {
         id: portField
-        text: "5007"
+        value: 5007
+        editable: true
         enabled: editor.enabled
         Layout.minimumWidth: 180
         Layout.fillWidth: true
+        to: 65535
     }
     HeaderLabel { text: qsTr("Listen IF") }
     ComboBox {
@@ -54,9 +56,9 @@ GridLayout {
         Layout.fillWidth: true
     }
     HeaderLabel { text: qsTr("Listen port") }
-    TextField {
+    SpinBox {
         id: listenPortField
-        //to: 65535
+        to: 65535
         enabled: editor.enabled
         Layout.minimumWidth: 180
         Layout.fillWidth: true

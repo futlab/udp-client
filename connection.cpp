@@ -45,6 +45,7 @@ void Connection::kill(Task *task)
 }
 
 Connection::Connection(QObject *parent) : QObject(parent), backend_(nullptr), state_(Active) {
+    connect(&socket_, SIGNAL(readyRead()), SLOT(read()));
 }
 
 Connection::Connection(const QString &name, const QString &address, int port, const QString &listenIf, int listenPort, BackEnd *parent) :
@@ -132,8 +133,10 @@ void Connection::read()
     if (head.isEmpty()) return;
 
     if (head == "OK") {
-        setState(Pinged);
-        emit pingOk(args.get().toString(), args.get().toString());
+        QString remoteIf = args.get().toString(), host = args.get().toString();
+        if (state_ == Wait)
+            setState(Pinged);
+        emit pingOk(remoteIf, host);
     } else if (head == "LIST") {
         launchFiles_.clear();
         QStringRef ref;
@@ -172,4 +175,20 @@ void Connection::setListenIf(QString listenIf)
     listenIf_ = listenIf;
     emit listenIfChanged(listenIf_);
     bind();
+}
+
+void Connection::unbind()
+{
+    if (socket_.state() != QAbstractSocket::UnconnectedState) socket_.abort();
+    setState(Off);
+}
+
+void Connection::scan()
+{
+    setState(Active);
+    QByteArray datagram = QString("ping %1").arg(listenPort_).toLocal8Bit();
+    qint32 local = QHostAddress(listenIf_).toIPv4Address();
+    for (qint32 ip = (local & 0xFFFFFF00); ip < (local | 0xFF); ip++)
+        if (ip != local)
+            socket_.writeDatagram(datagram, QHostAddress(ip), port_);
 }

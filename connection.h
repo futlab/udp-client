@@ -32,7 +32,7 @@ public:
     Connection(const QString &name, const QString &address, int port, const QString &listenIf, int listenPort, BackEnd *parent);
     ~Connection();
 
-    enum State { Active, Wait, Pinged, Error };
+    enum State { Active, Wait, Pinged, Error, Off };
     QString name() const { return name_; }
     QString address() const { return address_; }
     int port() const { return port_; }
@@ -48,13 +48,15 @@ public slots:
     void setListenPort(int listenPort);
     void read();
     void setListenIf(QString listenIf);
+    void unbind();
+    void scan();
 
 signals:
     void nameChanged(QString name);
     void addressChanged(QString address);
     void portChanged(int port);
     void listenPortChanged(int listenPort);
-    void pingOk(QString remotIf, QString host);
+    void pingOk(QString remoteIf, QString host);
     void listenIfChanged(QString listenIf);
     void launchFilesChanged(QStringList launchFiles);
     void stateChanged(State state);
