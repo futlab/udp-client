@@ -1,6 +1,7 @@
 #include "backend.h"
 #include <QNetworkInterface>
 #include <QSettings>
+#include <QStandardPaths>
 #include <QUuid>
 
 void BackEnd::removeConnection(int idx)
@@ -33,9 +34,9 @@ int BackEnd::appendTask(const QString &name, bool useRos, const QString &command
     return r;
 }
 
-BackEnd::BackEnd(QObject *parent) : QObject(parent)
-{
-    QSettings settings("Futlab", "UDP client");
+BackEnd::BackEnd(QObject *parent) : QObject(parent), settingsFile_(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/udp-client.ini")
+{    
+    QSettings settings(settingsFile_, QSettings::IniFormat);
     connectionIndex_ = settings.value("connectionIndex", QVariant(-1)).toInt();
     int l = settings.beginReadArray("connections");
     for (int i = 0; i < l; ++i) {
@@ -67,32 +68,7 @@ BackEnd::BackEnd(QObject *parent) : QObject(parent)
 
 BackEnd::~BackEnd()
 {
-    QSettings settings("Futlab", "UDP client");
-    settings.setValue("connectionIndex", connectionIndex_);
-    int l = connections_.length();
-    settings.beginWriteArray("connections", l);
-    for (int i = 0; i < l ; ++i) {
-        const Connection *c = connections_[i];
-        settings.setArrayIndex(i);
-        settings.setValue("name",       c->name());
-        settings.setValue("address",    c->address());
-        settings.setValue("port",       c->port());
-        settings.setValue("listenIf",   c->listenIf());
-        settings.setValue("listenPort", c->listenPort());
-    }
-    settings.endArray();
-
-    l = tasks_.length();
-    settings.beginWriteArray("tasks", l);
-    for (int i = 0; i < l ; ++i) {
-        const Task *t = tasks_[i];
-        settings.setArrayIndex(i);
-        settings.setValue("name",       t->name());
-        settings.setValue("useRos",     t->useRos());
-        settings.setValue("command",    t->command());
-        settings.setValue("launchFile", t->launchFile());
-    }
-    settings.endArray();
+    saveState();
 }
 
 Task *BackEnd::taskById(const QStringRef &id)
@@ -143,6 +119,37 @@ void BackEnd::setConnectionIndex(int connectionIndex)
     if (connectionIndex_ == connectionIndex) return;
     connectionIndex_ = connectionIndex;
     emit connectionIndexChanged(connectionIndex_);
+}
+
+void BackEnd::saveState()
+{
+    QSettings settings(settingsFile_, QSettings::IniFormat);
+    settings.setValue("connectionIndex", connectionIndex_);
+    int l = connections_.length();
+    settings.beginWriteArray("connections", l);
+    for (int i = 0; i < l ; ++i) {
+        const Connection *c = connections_[i];
+        settings.setArrayIndex(i);
+        settings.setValue("name",       c->name());
+        settings.setValue("address",    c->address());
+        settings.setValue("port",       c->port());
+        settings.setValue("listenIf",   c->listenIf());
+        settings.setValue("listenPort", c->listenPort());
+    }
+    settings.endArray();
+
+    l = tasks_.length();
+    settings.beginWriteArray("tasks", l);
+    for (int i = 0; i < l ; ++i) {
+        const Task *t = tasks_[i];
+        settings.setArrayIndex(i);
+        settings.setValue("name",       t->name());
+        settings.setValue("useRos",     t->useRos());
+        settings.setValue("command",    t->command());
+        settings.setValue("launchFile", t->launchFile());
+    }
+    settings.endArray();
+    settings.sync();
 }
 
 // static Connections handlers

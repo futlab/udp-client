@@ -22,11 +22,10 @@ ApplicationWindow {
     MainForm {
         backend: backend
         z: 10
-        //Layout.fillWidth: true
-        //Layout.fillHeight: true
         anchors.fill: parent
-        /*mouseArea.onClicked: {
-            console.log(qsTr('Clicked on background. Text: "' + textEdit.text + '"'))
-        }*/
+    }
+    onClosing: {
+        backend.saveState();
+        close.accepted = true;
     }
 }

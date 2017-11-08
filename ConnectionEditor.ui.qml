@@ -5,8 +5,6 @@ import udp_client.backend 1.0
 
 GridLayout {
     id: editor
-    //width: 400
-    //height: 400
     property alias listenIfIdx: listenIfBox.currentIndex
     property var interfaces
     property alias listenPort: listenPortField.text
@@ -16,7 +14,6 @@ GridLayout {
     Layout.fillWidth: true
     property bool enabled: true
     property bool showName: false
-    //spacing: 5
     rows: showName ? 5 : 4
     columns: 2
 
@@ -43,7 +40,7 @@ GridLayout {
     HeaderLabel { text: qsTr("Port") }
     TextField {
         id: portField
-        //to: 65535
+        text: "5007"
         enabled: editor.enabled
         Layout.minimumWidth: 180
         Layout.fillWidth: true
@@ -51,7 +48,6 @@ GridLayout {
     HeaderLabel { text: qsTr("Listen IF") }
     ComboBox {
         id: listenIfBox
-        //to: 65535
         model: interfaces
         enabled: editor.enabled
         Layout.minimumWidth: 180

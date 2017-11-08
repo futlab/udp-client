@@ -45,7 +45,6 @@ Pane {
                 Layout.fillHeight: true
                 Label {
                     text: "Unable to bind"
-                    //Layout.fillHeight: true
                     color: "red"
                     anchors.fill: parent
                     verticalAlignment: Text.AlignVCenter//currentConnection.errorMessage
@@ -124,7 +123,6 @@ Pane {
                         interfaces[ne.listenIfIdx], ne.listenPort)
             ne.name = ''
             ne.address = ''
-            ne.port = ''
             comboBox.currentIndex = i
         }
     }

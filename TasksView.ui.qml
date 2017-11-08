@@ -34,6 +34,15 @@ ListView {
         anchors.bottom: parent.bottom
         onClicked: newDialog.visible = true
     }
+    SignButton {
+        id: saveButton
+        text: "s"
+        anchors.rightMargin: 70
+        anchors.margins: 10
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+    }
+
     TaskDialog {
         id: newDialog
         visible: false
@@ -64,5 +73,10 @@ ListView {
         y: 41
         text: qsTr("Text")
         font.pixelSize: 12
+    }
+
+    Connections {
+        target: saveButton
+        onClicked: backend.saveState()
     }
 }
