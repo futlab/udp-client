@@ -4,6 +4,7 @@ import QtQuick.Layouts 1.3
 
 Pane {
     property alias logText: list.model
+    property bool tracking: true
     padding: 5
     Layout.fillWidth: true
     Layout.fillHeight: true
@@ -23,6 +24,31 @@ Pane {
             font.family: "Courier"
             textFormat: Text.PlainText
             elide: Text.ElideLeft
+        }
+        SignButton {
+            id: trackButton
+            text: "⤓"
+            highlighted: tracking
+            anchors.margins: 10
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+        }
+        Connections {
+            target: trackButton
+            onClicked: {
+                tracking = !tracking;
+                if (tracking)
+                    list.positionViewAtEnd()
+            }
+        }
+        Connections {
+            target: list.model
+            onCountChanged: if (tracking)
+                                list.positionViewAtEnd()
+        }
+        Connections {
+            target: list
+            onFlickEnded: tracking = false
         }
     }
 }
