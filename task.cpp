@@ -15,14 +15,12 @@ Task::~Task()
 
 void Task::logLine(const QStringRef &ref)
 {
-    log_.append(ref);
-    emit logChanged(log_);
+    emit log(ref.toString());
 }
 
-void Task::logLine(const QString &ref)
+void Task::logLine(const QString &line)
 {
-    log_.append(ref);
-    emit logChanged(log_);
+    emit log(line);
 }
 
 void Task::setState(State s) {

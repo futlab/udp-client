@@ -3,18 +3,21 @@ import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 
 Pane {
-    property alias logText: logText.text
+    property alias logText: list.model
     padding: 5
     Layout.fillWidth: true
     Layout.fillHeight: true
-    Flickable {
-        id: flick
+
+    ListView {
+        id: list
         clip: true
         anchors.fill: parent
-        contentWidth: logText.paintedWidth
-        contentHeight: logText.paintedHeight
-        Text {
-            id: logText
+        //model: ['tex1', 'text2']
+        //contentWidth: logText.paintedWidth
+        //contentHeight: logText.paintedHeight
+        delegate: Text {
+            id: delegate
+            text: line
             z: 5
             clip: false
             font.family: "Courier"

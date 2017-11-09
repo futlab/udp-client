@@ -21,7 +21,6 @@ void Connection::queryList()
 
 void Connection::launch(Task *task)
 {
-    task->clearLog();
     task->setState(Task::Wait);
     QString id = "#" + QUuid::createUuid().toString();
     task->setId(id);
@@ -117,6 +116,7 @@ public:
     }
     QStringRef all() {
         if (d < e && *d <= ' ') d++;
+        if (e > d && e[-1] < ' ') e--;
         if (d >= e) return QStringRef();
         return QStringRef(&data, d - data.data(), e - d);
     }
@@ -145,7 +145,6 @@ void Connection::read()
         emit launchFilesChanged(launchFiles_);
     } else if (head == "START") {
         if (Task * task = backend_->taskById(args.get())) {
-            task->clearLog();
             task->setState(Task::Active);
         }
     } else if (head == "QUIT") {

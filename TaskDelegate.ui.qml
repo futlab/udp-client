@@ -10,7 +10,11 @@ ItemDelegate {
     property bool expanded: false
     property Connection connection
     signal removeTask
+    signal newTask
     signal expand
+    ListModel {
+        id: log
+    }
 
     contentItem: ColumnLayout {
         spacing: 10
@@ -18,7 +22,7 @@ ItemDelegate {
             spacing: 10
             Label {
                 id: label
-                text: name
+                text: modelData ? modelData.name : ''
                 font.bold: true
                 elide: Text.ElideRight
                 Layout.fillWidth: true
@@ -41,7 +45,7 @@ ItemDelegate {
             }
             LaunchButton {
                 id: launchButton
-                state: modelData.state
+                state: modelData ? modelData.state : Task.Stop
             }
             SignButton {
                 id: expandButton
@@ -76,13 +80,13 @@ ItemDelegate {
                 TaskEditor {
                     id: taskEditor
                     connection: delegate.connection
-                    name: model.name
+                    name: modelData ? modelData.name : ''
                     onNameChanged: modelData.name = name
-                    useRos: model.useRos
+                    useRos: modelData ? modelData.useRos : false
                     onUseRosChanged: modelData.useRos = useRos
-                    command: model.command
+                    command: modelData ? modelData.command : ''
                     onCommandChanged: modelData.command = command
-                    launchFile: model.launchFile
+                    launchFile: modelData ? modelData.launchFile : ''
                     onLaunchFileChanged: modelData.launchFile = launchFile
                 }
             }
@@ -91,20 +95,38 @@ ItemDelegate {
 
     Connections {
         target: removeButton
-        onClicked: removeTask()
+        onClicked: if (modelData)
+                       removeTask()
+                   else
+                       newTask()
     }
 
     Connections {
         target: launchButton
         onClicked: if (modelData.state === Task.Active)
                        connection.stop(modelData)
-                   else
+                   else {
+                       log.clear()
                        connection.launch(modelData)
+                   }
     }
 
     Connections {
         target: expandButton
         onClicked: expand()
+    }
+
+    Connections {
+        target: modelData
+        onLog: log.append({
+                              line: line
+                          })
+    }
+
+    Connections {
+        target: modelData
+        onStateChanged: if (state === Task.Active)
+                            log.clear()
     }
 
     states: [
@@ -127,6 +149,22 @@ ItemDelegate {
                 target: expandButton
                 text: "▲"
                 highlighted: true
+            }
+        },
+        State {
+            name: "new"
+            when: !modelData
+            PropertyChanges {
+                target: expandButton
+                visible: false
+            }
+            PropertyChanges {
+                target: launchButton
+                visible: false
+            }
+            PropertyChanges {
+                target: removeButton
+                text: "+"
             }
         }
     ]

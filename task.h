@@ -9,7 +9,6 @@ class Task : public QObject
     Q_OBJECT
     Q_ENUMS(State)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
-    Q_PROPERTY(QString log READ log NOTIFY logChanged)
     Q_PROPERTY(State state READ state NOTIFY stateChanged)
     Q_PROPERTY(bool useRos READ useRos WRITE setUseRos NOTIFY useRosChanged)
     Q_PROPERTY(QString command READ command WRITE setCommand NOTIFY commandChanged)
@@ -23,10 +22,8 @@ public:
 
     enum State { Stop, Wait, Active, Error };
     QString name() const { return name_; }
-    QString log() const { return log_; }
-    void clearLog() { log_ = ""; emit logChanged(log_); }
     void logLine(const QStringRef &ref);
-    void logLine(const QString &ref);
+    void logLine(const QString &line);
     State state() const { return state_; }
     void setState(State a);
     QString command() const { return command_; }
@@ -43,17 +40,16 @@ public slots:
 
 signals:
     void nameChanged(QString name);
-    void logChanged(QString log);
     void stateChanged(bool state);
     void commandChanged(QString command);
     void useRosChanged(bool useRos);
-
     void idChanged(QString id);
-
     void launchFileChanged(QString launchFile);
+    void log(QString line);
 
 private:
-    QString name_, log_, command_, launchFile_, id_;
+    QString name_, command_, launchFile_, id_;
+    QStringList log_;
     State state_;
     bool useRos_;
 };

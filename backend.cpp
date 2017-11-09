@@ -185,10 +185,12 @@ void BackEnd::clearTasks(QQmlListProperty<Task> *list)
 
 Task *BackEnd::task(QQmlListProperty<Task> *list, int i)
 {
-    return reinterpret_cast<BackEnd*>(list->data)->tasks_.at(i);
+    auto &ts = reinterpret_cast<BackEnd*>(list->data)->tasks_;
+    if (i >= ts.length() || i < 0) return nullptr;
+    return ts.at(i);
 }
 
 int BackEnd::taskCount(QQmlListProperty<Task> *list)
 {
-    return reinterpret_cast<BackEnd*>(list->data)->tasks_.length();
+    return reinterpret_cast<BackEnd*>(list->data)->tasks_.length() + 1;
 }

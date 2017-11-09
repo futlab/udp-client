@@ -9,11 +9,11 @@ Button {
     id: launchButton
     property int state
     text: "LAUNCH"
-    highlighted: modelData.state === Task.Active
+    highlighted: state === Task.Active
     states:  [
         State {
             name: "active"
-            when: modelData.state === Task.Active
+            when: launchButton.state === Task.Active
             PropertyChanges {
                 target: launchButton
                 highlighted: true

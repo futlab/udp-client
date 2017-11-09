@@ -26,24 +26,16 @@ ListView {
                 sureDialog.visible = true
                 view.taskIndex = index
             }
+            onNewTask: newDialog.visible = true
+            onExpand: if (delegate.expanded)
+                          view.taskIndex = -1
+                      else
+                          view.taskIndex = index
         }
-        Connections {
-            target: delegate
-            onExpand: if (delegate.expanded) view.taskIndex = -1;
-                      else view.taskIndex = index
-        }
-    }
-    SignButton {
-        text: "+"
-        anchors.margins: 10
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        onClicked: newDialog.visible = true
     }
     SignButton {
         id: saveButton
         text: "s"
-        anchors.rightMargin: 70
         anchors.margins: 10
         anchors.right: parent.right
         anchors.bottom: parent.bottom
