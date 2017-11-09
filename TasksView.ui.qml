@@ -24,7 +24,7 @@ ListView {
             target: delegate
             onRemoveTask: {
                 sureDialog.visible = true
-                view.taskIndex = index
+                sureDialog.data = index
             }
             onNewTask: newDialog.visible = true
             onExpand: if (delegate.expanded)
@@ -54,7 +54,7 @@ ListView {
     }
     Connections {
         target: sureDialog
-        onYes: tasksListModel.remove(taskIndex)
+        onYes: backend.removeTask(sureDialog.data)
     }
 
     Connections {
@@ -64,15 +64,6 @@ ListView {
             backend.appendTask(e.name, e.useRos, e.command, e.launchFile)
         }
     }
-
-    Text {
-        id: text1
-        x: -130
-        y: 41
-        text: qsTr("Text")
-        font.pixelSize: 12
-    }
-
     Connections {
         target: saveButton
         onClicked: backend.saveState()

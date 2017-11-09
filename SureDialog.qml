@@ -6,4 +6,5 @@ Dialog {
     visible: false
     title: 'Are you sure?'
     standardButtons: StandardButton.Yes | StandardButton.No
+    property var data
 }
