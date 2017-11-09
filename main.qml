@@ -25,7 +25,7 @@ ApplicationWindow {
         anchors.fill: parent
     }
     onClosing: {
-        backend.saveState();
+        backend.saveSettings();
         close.accepted = true;
     }
 }

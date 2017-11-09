@@ -7,6 +7,7 @@ void BackEnd::removeConnection(int idx)
 {
     connections_.remove(idx);
     emit connectionsChanged(connections());
+    saveSettings();
 }
 
 int BackEnd::appendConnection(const QString &name, const QString &address, int port, const QString &listenIf, int listenPort)
@@ -15,6 +16,7 @@ int BackEnd::appendConnection(const QString &name, const QString &address, int p
     auto c = new Connection(name, address, port, listenIf, listenPort, this);
     connections_.append(c);
     emit connectionsChanged(connections());
+    saveSettings();
     return r;
 }
 
@@ -22,6 +24,7 @@ void BackEnd::removeTask(int idx)
 {
     tasks_.remove(idx);
     emit tasksChanged(tasks());
+    saveSettings();
 }
 
 int BackEnd::appendTask(const QString &name, bool useRos, const QString &command, const QString &launchFile)
@@ -30,11 +33,13 @@ int BackEnd::appendTask(const QString &name, bool useRos, const QString &command
     auto t = new Task(name, useRos, command, launchFile);
     tasks_.append(t);
     emit tasksChanged(tasks());
+    saveSettings();
     return r;
 }
 
-BackEnd::BackEnd(QObject *parent) : QObject(parent), settingsFile_(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/udp-client.ini")
-{    
+BackEnd::BackEnd(QObject *parent) :
+    QObject(parent), settingsSaved(true), settingsFile_(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/udp-client.ini")
+{
     QSettings settings(settingsFile_, QSettings::IniFormat);
     connectionIndex_ = settings.value("connectionIndex", QVariant(-1)).toInt();
     int l = settings.beginReadArray("connections");
@@ -63,11 +68,14 @@ BackEnd::BackEnd(QObject *parent) : QObject(parent), settingsFile_(QStandardPath
         tasks_.append(t);
     }
     settings.endArray();
+
+    connect(this, SIGNAL(tasksChanged(QQmlListProperty<Task>)), SLOT(settingsChanged()));
+    connect(this, SIGNAL(connectionsChanged(QQmlListProperty<Connection>)), SLOT(settingsChanged()));
 }
 
 BackEnd::~BackEnd()
 {
-    saveState();
+    saveSettings();
 }
 
 Task *BackEnd::taskById(const QStringRef &id)
@@ -120,8 +128,9 @@ void BackEnd::setConnectionIndex(int connectionIndex)
     emit connectionIndexChanged(connectionIndex_);
 }
 
-void BackEnd::saveState()
+void BackEnd::saveSettings()
 {
+    if (settingsSaved) return;
     QSettings settings(settingsFile_, QSettings::IniFormat);
     settings.setValue("connectionIndex", connectionIndex_);
     int l = connections_.length();
@@ -149,6 +158,12 @@ void BackEnd::saveState()
     }
     settings.endArray();
     settings.sync();
+    settingsSaved = true;
+}
+
+void BackEnd::settingsChanged()
+{
+    settingsSaved = false;
 }
 
 // static Connections handlers

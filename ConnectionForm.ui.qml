@@ -8,7 +8,7 @@ Pane {
     id: connectionForm
     property BackEnd backend
     property var interfaces: backend.interfaces
-    property Connection currentConnection: backend.connections[comboBox.currentIndex];
+    property Connection currentConnection: backend.connections[comboBox.currentIndex]
     property int listenPortCtr: 5555
     //width: 346
     property bool expanded: false
@@ -35,7 +35,7 @@ Pane {
 
             PingButton {
                 id: pingButton
-                connection: backend.connections[comboBox.currentIndex]
+                connection: enabled ? backend.connections[comboBox.currentIndex] : null
                 enabled: comboBox.currentIndex >= 0
             }
 
@@ -47,12 +47,14 @@ Pane {
                     text: "Unable to bind"
                     color: "red"
                     anchors.fill: parent
-                    verticalAlignment: Text.AlignVCenter//currentConnection.errorMessage
-                    visible: currentConnection && currentConnection.state === Connection.Error
+                    verticalAlignment: Text.AlignVCenter //currentConnection.errorMessage
+                    visible: currentConnection
+                             && currentConnection.state === Connection.Error
                 }
                 CheckBox {
                     text: "Autoping"
-                    visible: currentConnection && currentConnection.state !== Connection.Error
+                    visible: currentConnection
+                             && currentConnection.state !== Connection.Error
                 }
             }
 
@@ -66,7 +68,6 @@ Pane {
                 text: "▼"
                 highlighted: true
                 Layout.alignment: Qt.AlignRight
-                onClicked: expanded = !expanded
             }
             SignButton {
                 id: deleteButton
@@ -111,6 +112,14 @@ Pane {
             newDialog.visible = true
         }
     }
+    Connections {
+        target: expandButton
+        onClicked: {
+            expanded = !expanded
+            if (!expanded)
+                backend.saveSettings()
+        }
+    }
 
     Connections {
         target: deleteButton
@@ -132,8 +141,8 @@ Pane {
     Connections {
         target: comboBox
         onCurrentIndexChanged: {
-            connectionForm.currentConnection = backend.connections[comboBox.currentIndex];
-            backend.connectionIndex = comboBox.currentIndex;
+            connectionForm.currentConnection = backend.connections[comboBox.currentIndex]
+            backend.connectionIndex = comboBox.currentIndex
         }
     }
 

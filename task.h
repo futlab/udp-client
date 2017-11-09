@@ -4,6 +4,8 @@
 #include <QObject>
 #include <QString>
 
+class BackEnd;
+
 class Task : public QObject
 {
     Q_OBJECT
@@ -17,7 +19,7 @@ class Task : public QObject
 
 public:
     Task(QObject *parent = nullptr);
-    Task(const QString &name, bool userRos, const QString &command,const QString &launchFile, QObject *parent = nullptr);
+    Task(const QString &name, bool userRos, const QString &command,const QString &launchFile, BackEnd *parent = nullptr);
     ~Task();
 
     enum State { Stop, Wait, Active, Error };
@@ -52,6 +54,7 @@ private:
     QStringList log_;
     State state_;
     bool useRos_;
+    BackEnd * const backend_;
 };
 
 #endif // TASK_H

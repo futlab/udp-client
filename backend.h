@@ -32,7 +32,8 @@ public:
 
 public slots:
     void setConnectionIndex(int connectionIndex);
-    void saveState();
+    void saveSettings();
+    void settingsChanged();
 
 signals:
     void tasksChanged(QQmlListProperty<Task> tasks);
@@ -55,6 +56,7 @@ private:
     QVector<Connection *> connections_;
     QStringList m_interfaces;
     int connectionIndex_;
+    bool settingsSaved;
     const QString settingsFile_;
 };
 

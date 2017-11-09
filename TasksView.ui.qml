@@ -23,8 +23,8 @@ ListView {
         Connections {
             target: delegate
             onRemoveTask: {
-                sureDialog.visible = true
                 sureDialog.data = index
+                sureDialog.visible = true
             }
             onNewTask: newDialog.visible = true
             onExpand: if (delegate.expanded)
@@ -32,13 +32,6 @@ ListView {
                       else
                           view.taskIndex = index
         }
-    }
-    SignButton {
-        id: saveButton
-        text: "s"
-        anchors.margins: 10
-        anchors.right: parent.right
-        anchors.bottom: parent.bottom
     }
 
     TaskDialog {
@@ -65,7 +58,7 @@ ListView {
         }
     }
     Connections {
-        target: saveButton
-        onClicked: backend.saveState()
+        target: view
+        onTaskIndexChanged: backend.saveSettings()
     }
 }

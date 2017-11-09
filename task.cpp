@@ -1,11 +1,12 @@
 #include "task.h"
+#include "backend.h"
 
-Task::Task(QObject *parent) : QObject(parent)
+Task::Task(QObject *parent) : QObject(parent), backend_(nullptr)
 {
 }
 
-Task::Task(const QString &name, bool useRos, const QString &command, const QString &launchFile, QObject *parent) :
-    QObject(parent), name_(name), command_(command), launchFile_(launchFile), state_(Stop), useRos_(useRos)
+Task::Task(const QString &name, bool useRos, const QString &command, const QString &launchFile, BackEnd *parent) :
+    QObject(parent), name_(name), command_(command), launchFile_(launchFile), state_(Stop), useRos_(useRos), backend_(parent)
 {
 }
 
@@ -34,6 +35,7 @@ void Task::setName(QString name)
     if (name_ == name) return;
     name_ = name;
     emit nameChanged(name_);
+    if (backend_) emit backend_->settingsChanged();
 }
 
 void Task::setCommand(QString command)
@@ -41,6 +43,7 @@ void Task::setCommand(QString command)
     if (command_ == command) return;
     command_ = command;
     emit commandChanged(command_);
+    if (backend_) emit backend_->settingsChanged();
 }
 
 void Task::setUseRos(bool useRos)
@@ -48,6 +51,7 @@ void Task::setUseRos(bool useRos)
     if (useRos_ == useRos) return;
     useRos_ = useRos;
     emit useRosChanged(useRos_);
+    if (backend_) emit backend_->settingsChanged();
 }
 
 void Task::setId(QString id)
@@ -62,4 +66,5 @@ void Task::setLaunchFile(QString launchFile)
     if (launchFile_ == launchFile) return;
     launchFile_ = launchFile;
     emit launchFileChanged(launchFile_);
+    if (backend_) emit backend_->settingsChanged();
 }

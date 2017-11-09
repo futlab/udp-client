@@ -63,6 +63,7 @@ void Connection::setName(QString name)
     if (name_ == name) return;
     name_ = name;
     emit nameChanged(name_);
+    if (backend_) emit backend_->settingsChanged();
 }
 
 void Connection::setAddress(QString address)
@@ -70,6 +71,7 @@ void Connection::setAddress(QString address)
     if (address_ == address) return;
     address_ = address;
     emit addressChanged(address_);
+    if (backend_) emit backend_->settingsChanged();
 }
 
 void Connection::setPort(int port)
@@ -77,6 +79,7 @@ void Connection::setPort(int port)
     if (port_ == port) return;
     port_ = port;
     emit portChanged(port_);
+    if (backend_) emit backend_->settingsChanged();
 }
 
 void Connection::setListenPort(int listenPort)
@@ -84,6 +87,7 @@ void Connection::setListenPort(int listenPort)
     if (listenPort_ == listenPort) return;
     listenPort_ = listenPort;
     emit listenPortChanged(listenPort_);
+    if (backend_) emit backend_->settingsChanged();
     bind();
 }
 
@@ -143,26 +147,28 @@ void Connection::read()
         while ((ref = args.get()) != "")
              launchFiles_.append(ref.toString());
         emit launchFilesChanged(launchFiles_);
-    } else if (head == "START") {
-        if (Task * task = backend_->taskById(args.get())) {
-            task->setState(Task::Active);
+    } else if (backend_) {
+        if (head == "START") {
+            if (Task * task = backend_->taskById(args.get())) {
+                task->setState(Task::Active);
+            }
+        } else if (head == "QUIT") {
+            QStringRef id = args.get();
+            if (Task *task = backend_->taskById(id)) {
+                task->logLine(QString("Exit with code %1").arg(args.get().toString()));
+                task->setState(Task::Stop);
+            }
+        } else if (head == "ERROR") {
+            if (Task *task = backend_->taskById(args.get()))
+            {
+                task->logLine(QString("Exception: %1").arg(args.all().toString()));
+                task->setState(Task::Error);
+                //task->setError(true);
+            }
+        } else if (head.at(0) == '#') {
+            if (Task *task = backend_->taskById(head))
+                task->logLine(args.all());
         }
-    } else if (head == "QUIT") {
-        QStringRef id = args.get();
-        if (Task *task = backend_->taskById(id)) {
-            task->logLine(QString("Exit with code %1").arg(args.get().toString()));
-            task->setState(Task::Stop);
-        }
-    } else if (head == "ERROR") {
-        if (Task *task = backend_->taskById(args.get()))
-        {
-            task->logLine(QString("Exception: %1").arg(args.all().toString()));
-            task->setState(Task::Error);
-            //task->setError(true);
-        }
-    } else if (head.at(0) == '#') {
-        if (Task *task = backend_->taskById(head))
-            task->logLine(args.all());
     }
 }
 
