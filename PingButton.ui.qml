@@ -18,7 +18,7 @@ Button {
     states: [
         State {
             name: "ok"
-            when: connection.state === Connection.Pinged
+            when: connection && connection.state === Connection.Pinged
             PropertyChanges {
                 target: pingButton
                 highlighted: true
@@ -26,7 +26,7 @@ Button {
         },
         State {
             name: "fail"
-            when: connection.state === Connection.Wait
+            when: connection && connection.state === Connection.Wait
             PropertyChanges {
                 target: pingButton
                 Material.background: Material.Red
@@ -34,7 +34,7 @@ Button {
         },
         State {
             name: "error"
-            when: connection.state === Connection.Error
+            when: !connection || connection.state === Connection.Error
             PropertyChanges {
                 target: pingButton
                 enabled: false
