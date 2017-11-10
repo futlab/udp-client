@@ -5,6 +5,7 @@
 #include <QString>
 #include <QVector>
 #include <QQmlListProperty>
+#include <QTimer>
 
 #include "task.h"
 #include "connection.h"
@@ -24,9 +25,12 @@ public:
     ~BackEnd();
 
     Task *taskById(const QStringRef &id);
+    int taskIdxByCommand(bool useRos, const QStringRef &command);
+    void activateTasks(const QStringList &ids, const QVector<int> idxs);
     QQmlListProperty<Task> tasks();
     QQmlListProperty<Connection> connections();
     int connectionIndex() const { return connectionIndex_; }
+    QVector<bool> activeTasks() const;
 
 public slots:
     void setConnectionIndex(int connectionIndex);
@@ -37,6 +41,9 @@ signals:
     void tasksChanged(QQmlListProperty<Task> tasks);
     void connectionsChanged(QQmlListProperty<Connection> connections);
     void connectionIndexChanged(int connectionIndex);
+
+private slots:
+    void updateTasks();
 
 private:
     static void appendConnection(QQmlListProperty<Connection>* list, Connection *c);
@@ -54,6 +61,7 @@ private:
     int connectionIndex_;
     bool settingsSaved;
     const QString settingsFile_;
+    QTimer timer_;
 };
 
 #endif // BACKEND_H

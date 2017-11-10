@@ -71,6 +71,9 @@ BackEnd::BackEnd(QObject *parent) :
     connect(this, SIGNAL(connectionIndexChanged(int)), SLOT(settingsChanged()));
     connect(this, SIGNAL(tasksChanged(QQmlListProperty<Task>)), SLOT(settingsChanged()));
     connect(this, SIGNAL(connectionsChanged(QQmlListProperty<Connection>)), SLOT(settingsChanged()));
+
+    connect(&timer_, SIGNAL(timeout()), this, SLOT(updateTasks()));
+    timer_.start(5000);
 }
 
 BackEnd::~BackEnd()
@@ -84,6 +87,48 @@ Task *BackEnd::taskById(const QStringRef &id)
         if (t->id() == id)
             return t;
     return nullptr;
+}
+
+QString firstWord(const QString &s)
+{
+    int i = s.indexOf(' ');
+    return (i < 0) ? s : s.mid(0, i);
+}
+
+int BackEnd::taskIdxByCommand(bool useRos, const QStringRef &command)
+{
+    QStringRef cmd = command;
+    int i = cmd.lastIndexOf('/');
+    if (i >= 0) cmd = cmd.mid(i + 1);
+    for (int x = 0; x < tasks_.length(); x++) {
+        Task *t = tasks_[x];
+        if (useRos) {
+            if (!t->useRos()) continue;
+            if (firstWord(t->launchFile()) == cmd) return x;
+        } else {
+            if (t->useRos()) continue;
+            if (firstWord(t->command()) == cmd) return x;
+        }
+    }
+    return -1;
+}
+
+void BackEnd::activateTasks(const QStringList &ids, const QVector<int> idxs)
+{
+    QVector<bool> active;
+    int l = tasks_.length();
+    active.resize(l);
+    for (int i = 0; i < l; i++)
+        active[i] = tasks_[i]->state() == Task::Active;
+    for (int i = 0; i < ids.length(); i++) {
+        Task *task = tasks_[idxs[i]];
+        task->setId(ids[i]);
+        task->setState(Task::Active);
+        active[idxs[i]] = false;
+    }
+    for (int i = 0; i < l; i++)
+        if (active[i])
+            tasks_[i]->setState(Task::Stop);
 }
 
 QQmlListProperty<Task> BackEnd::tasks()
@@ -107,7 +152,11 @@ QQmlListProperty<Connection> BackEnd::connections()
 void BackEnd::setConnectionIndex(int connectionIndex)
 {
     if (connectionIndex_ == connectionIndex) return;
+    connections_[connectionIndex_]->unbind();
     connectionIndex_ = connectionIndex;
+    connections_[connectionIndex]->bind();
+    for (auto t : tasks_)
+        t->setState(Task::Stop);
     emit connectionIndexChanged(connectionIndex_);
 }
 
@@ -147,6 +196,14 @@ void BackEnd::saveSettings()
 void BackEnd::settingsChanged()
 {
     settingsSaved = false;
+}
+
+void BackEnd::updateTasks()
+{
+    if (connectionIndex_ < 0) return;
+    Connection * c = connections_[connectionIndex_];
+    if (c->state() == Connection::Error || c->state() == Connection::Off) return;
+    c->queryTasks();
 }
 
 // static Connections handlers

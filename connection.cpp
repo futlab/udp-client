@@ -19,6 +19,13 @@ void Connection::queryList()
     socket_.writeDatagram(data.toLocal8Bit(), address, port_);
 }
 
+QString parseIf(const QString &name)
+{
+    int i = name.indexOf(':');
+    if (i < 0) return name;
+    return name.mid(0, i);
+}
+
 void Connection::launch(Task *task)
 {
     task->setState(Task::Wait);
@@ -26,20 +33,20 @@ void Connection::launch(Task *task)
     task->setId(id);
     QString param = task->useRos() ? task->launchFile() : task->command();
     param.replace("#remote", address_);
-    param.replace("#local", this->listenIf_);
+    param.replace("#local", parseIf(this->listenIf_));
     QString data = QString(task->useRos() ? "roslaunch %1 %2 %3" : "launch %1 %2 %3").arg(listenPort_).arg(id).arg(param);
     socket_.writeDatagram(data.toLocal8Bit(), QHostAddress(address_), port_);
 }
 
 void Connection::stop(Task *task)
 {
-    QString data = QString("stop %1").arg(task->id());
+    QString data = QString("stop %1 %2").arg(listenPort_).arg(task->id());
     socket_.writeDatagram(data.toLocal8Bit(), QHostAddress(address_), port_);
 }
 
 void Connection::kill(Task *task)
 {
-    QString data = QString("kill %1").arg(task->id());
+    QString data = QString("kill %1 %2").arg(listenPort_).arg(task->id());
     socket_.writeDatagram(data.toLocal8Bit(), QHostAddress(address_), port_);
 }
 
@@ -111,11 +118,12 @@ class WordParser
     const QChar *d, *e;
 public:
     WordParser(const QByteArray &bytes) : data(bytes), d(data.data()), e(d + data.length()) {}
-    QStringRef get() {
-        while (d < e && *d <= ' ') d++;
+    WordParser(const QString &str) : data(str), d(data.data()), e(d + data.length()) {}
+    QStringRef get(const QChar c = ' ') {
+        if (d < e && *d <= ' ') d++;
         if (d >= e) return QStringRef();
         const QChar *f = d;
-        while (d < e && *d > ' ') d++;
+        while (d < e && *d > c) d++;
         return QStringRef(&data, f - data.data(), d - f);
     }
     QStringRef all() {
@@ -165,6 +173,24 @@ void Connection::read()
                 task->setState(Task::Error);
                 //task->setError(true);
             }
+        } else if (head == "TASKS") {
+            QStringList ids;
+            QVector<int> idxs;
+            while (true) {
+                QStringRef id = args.get();
+                if (id == "") break;
+                QStringRef cmd = args.get('\n');
+                if (cmd == "") break;
+                WordParser cp(cmd.toString());
+                QStringRef c1 = cp.get();
+                if (c1 == "") continue;
+                bool useRos = c1 == "roslaunch";
+                int i = backend_->taskIdxByCommand(useRos, useRos ? cp.get() : c1);
+                if (i < 0) continue;
+                ids.append(id.toString());
+                idxs.append(i);
+            }
+            backend_->activateTasks(ids, idxs);
         } else if (head.at(0) == '#') {
             if (Task *task = backend_->taskById(head))
                 task->logLine(args.all());
@@ -196,4 +222,11 @@ void Connection::scan()
     for (qint32 ip = (local & 0xFFFFFF00); ip < (local | 0xFF); ip++)
         if (ip != local)
             socket_.writeDatagram(datagram, QHostAddress(ip), port_);
+}
+
+void Connection::queryTasks()
+{
+    QString data = QString("tasks %1").arg(listenPort_);
+    QHostAddress address(address_);
+    socket_.writeDatagram(data.toLocal8Bit(), address, port_);
 }

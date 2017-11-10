@@ -89,7 +89,7 @@ Pane {
             onListenPortChanged: if (enabled)
                                      backend.connections[comboBox.currentIndex].listenPort
                                              = listenPort
-            listenIf: form.currentConnection ? form.currentConnection.listenIf : ''
+            listenIf: enabled ? backend.connections[comboBox.currentIndex].listenIf : ''
             onListenIfChanged: if (enabled)
                                    backend.connections[comboBox.currentIndex].listenIf = listenIf
         }

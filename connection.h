@@ -39,7 +39,7 @@ public:
     int listenPort() const { return listenPort_; }
     QString listenIf() const { return listenIf_; }
     QStringList launchFiles() const { return launchFiles_; }
-    State state() const { return state_; }
+    inline State state() const { return state_; }
 
 public slots:
     void setName(QString name);
@@ -49,7 +49,9 @@ public slots:
     void read();
     void setListenIf(QString listenIf);
     void unbind();
+    void bind();
     void scan();
+    void queryTasks();
 
 signals:
     void nameChanged(QString name);
@@ -67,7 +69,6 @@ private:
     QUdpSocket socket_;
     BackEnd * const backend_;
     State state_;
-    void bind();
     void setState(State state);
 };
 
