@@ -7,7 +7,7 @@ ComboBox {
     id: box
     editable: true
     property alias text: textField.text
-    onActivated: launchFile = box.currentText //console.log("Activated", index)
+    onActivated: launchFile = box.currentText
     contentItem: TextField {
         id: textField
         //text: "any text"

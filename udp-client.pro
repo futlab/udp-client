@@ -15,7 +15,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += main.cpp \
     backend.cpp \
     task.cpp \
-    connection.cpp
+    connection.cpp \
+    interfaces.cpp
 
 RESOURCES += qml.qrc
 
@@ -33,7 +34,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 HEADERS += \
     backend.h \
     task.h \
-    connection.h
+    connection.h \
+    interfaces.h
 
 DISTFILES +=
 

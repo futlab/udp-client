@@ -27,12 +27,21 @@ Pane {
         }
         SignButton {
             id: trackButton
-            text: "⤓"
+            text: "↓"
             highlighted: tracking
             anchors.margins: 10
             anchors.right: parent.right
             anchors.bottom: parent.bottom
         }
+        SignButton {
+            id: clearButton
+            text: "✘"
+            anchors.margins: 10
+            anchors.rightMargin: 50
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+        }
+
         Connections {
             target: trackButton
             onClicked: {

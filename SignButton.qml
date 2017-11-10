@@ -5,6 +5,5 @@ RoundButton {
     /*bottomPadding: 8
     font.bold: true
     font.pointSize: 16*/
-    highlighted: true
     //anchors.margins: 10
 }

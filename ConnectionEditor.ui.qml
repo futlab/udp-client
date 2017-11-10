@@ -5,8 +5,7 @@ import udp_client.backend 1.0
 
 GridLayout {
     id: editor
-    property alias listenIfIdx: listenIfBox.currentIndex
-    property var interfaces
+    property alias listenIf: listenIfBox.text
     property alias listenPort: listenPortField.value
     property alias name: nameField.text
     property alias port: portField.value
@@ -23,21 +22,27 @@ GridLayout {
     }
     TextField {
         id: nameField
+        horizontalAlignment: Text.AlignHCenter
         visible: editor.showName
         enabled: editor.enabled
         Layout.minimumWidth: 180
         Layout.fillWidth: true
     }
 
-    HeaderLabel { text: qsTr("Address") }
+    HeaderLabel {
+        text: qsTr("Address")
+    }
     TextField {
         id: addressField
+        horizontalAlignment: Text.AlignHCenter
         enabled: editor.enabled
         Layout.minimumWidth: 180
         Layout.fillWidth: true
     }
 
-    HeaderLabel { text: qsTr("Port") }
+    HeaderLabel {
+        text: qsTr("Port")
+    }
     SpinBox {
         id: portField
         value: 5007
@@ -47,15 +52,18 @@ GridLayout {
         Layout.fillWidth: true
         to: 65535
     }
-    HeaderLabel { text: qsTr("Listen IF") }
-    ComboBox {
+    HeaderLabel {
+        text: qsTr("Listen IF")
+    }
+    IfComboBox {
         id: listenIfBox
-        model: interfaces
         enabled: editor.enabled
         Layout.minimumWidth: 180
         Layout.fillWidth: true
     }
-    HeaderLabel { text: qsTr("Listen port") }
+    HeaderLabel {
+        text: qsTr("Listen port")
+    }
     SpinBox {
         id: listenPortField
         to: 65535

@@ -5,12 +5,11 @@ import QtQuick.Dialogs 1.2
 import udp_client.backend 1.0
 
 Pane {
-    id: connectionForm
+    id: form
     property BackEnd backend
     property var interfaces: backend.interfaces
     property Connection currentConnection: backend.connections[comboBox.currentIndex]
     property int listenPortCtr: 5555
-    //width: 346
     property bool expanded: false
 
     ColumnLayout {
@@ -66,7 +65,6 @@ Pane {
             SignButton {
                 id: expandButton
                 text: "▼"
-                highlighted: true
                 Layout.alignment: Qt.AlignRight
             }
             SignButton {
@@ -81,7 +79,6 @@ Pane {
             id: editor
             visible: false
             enabled: comboBox.currentIndex >= 0
-            interfaces: connectionForm.interfaces
             address: enabled ? backend.connections[comboBox.currentIndex].address : ''
             onAddressChanged: if (enabled)
                                   backend.connections[comboBox.currentIndex].address = address
@@ -92,9 +89,9 @@ Pane {
             onListenPortChanged: if (enabled)
                                      backend.connections[comboBox.currentIndex].listenPort
                                              = listenPort
-            onListenIfIdxChanged: if (enabled)
-                                      backend.connections[comboBox.currentIndex].listenIf
-                                              = interfaces[listenIfIdx]
+            listenIf: form.currentConnection ? form.currentConnection.listenIf : ''
+            onListenIfChanged: if (enabled)
+                                   backend.connections[comboBox.currentIndex].listenIf = listenIf
         }
     }
 
@@ -130,8 +127,8 @@ Pane {
         target: newDialog
         onAccepted: {
             var ne = newDialog.editor, i = backend.appendConnection(
-                        ne.name, ne.address, ne.port,
-                        interfaces[ne.listenIfIdx], ne.listenPort)
+                        ne.name, ne.address, ne.port, ne.listenIf,
+                        ne.listenPort)
             ne.name = ''
             ne.address = ''
             comboBox.currentIndex = i
@@ -141,7 +138,7 @@ Pane {
     Connections {
         target: comboBox
         onCurrentIndexChanged: {
-            connectionForm.currentConnection = backend.connections[comboBox.currentIndex]
+            form.currentConnection = backend.connections[comboBox.currentIndex]
             backend.connectionIndex = comboBox.currentIndex
         }
     }
@@ -149,7 +146,7 @@ Pane {
     states: [
         State {
             name: "expanded"
-            when: connectionForm.expanded
+            when: form.expanded
             PropertyChanges {
                 target: editor
                 visible: true
@@ -157,6 +154,7 @@ Pane {
             PropertyChanges {
                 target: expandButton
                 text: "▲"
+                highlighted: true
             }
         }
     ]

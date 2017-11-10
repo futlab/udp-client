@@ -1,5 +1,4 @@
 #include "backend.h"
-#include <QNetworkInterface>
 #include <QSettings>
 #include <QStandardPaths>
 
@@ -69,6 +68,7 @@ BackEnd::BackEnd(QObject *parent) :
     }
     settings.endArray();
 
+    connect(this, SIGNAL(connectionIndexChanged(int)), SLOT(settingsChanged()));
     connect(this, SIGNAL(tasksChanged(QQmlListProperty<Task>)), SLOT(settingsChanged()));
     connect(this, SIGNAL(connectionsChanged(QQmlListProperty<Connection>)), SLOT(settingsChanged()));
 }
@@ -102,23 +102,6 @@ QQmlListProperty<Connection> BackEnd::connections()
                                         &BackEnd::connectionCount,
                                         &BackEnd::connection,
                                         &BackEnd::clearConnections);
-}
-
-QStringList BackEnd::interfaces() const
-{
-    QStringList r;
-    for (auto i : QNetworkInterface::allInterfaces()) {
-        if (!i.isValid()) continue;
-        int f = i.flags();
-        if (f & (QNetworkInterface::IsLoopBack | QNetworkInterface::IsPointToPoint)) continue;
-        if (!(f & QNetworkInterface::IsUp)) continue;
-        for (auto a : i.addressEntries()) {
-            QHostAddress ip = a.ip();
-            if (ip.isNull() || ip.protocol() != QAbstractSocket::IPv4Protocol) continue;
-            r.push_back(ip.toString());
-        }
-    }
-    return r;
 }
 
 void BackEnd::setConnectionIndex(int connectionIndex)

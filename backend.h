@@ -15,7 +15,6 @@ class BackEnd : public QObject
     Q_PROPERTY(int connectionIndex READ connectionIndex WRITE setConnectionIndex NOTIFY connectionIndexChanged)
     Q_PROPERTY(QQmlListProperty<Task> tasks READ tasks NOTIFY tasksChanged)
     Q_PROPERTY(QQmlListProperty<Connection> connections READ connections NOTIFY connectionsChanged)
-    Q_PROPERTY(QStringList interfaces READ interfaces NOTIFY interfacesChanged)
 public:
     Q_INVOKABLE void removeConnection(int idx);
     Q_INVOKABLE int appendConnection(const QString &name, const QString &address, int port, const QString &listenIf, int listenPort);
@@ -27,7 +26,6 @@ public:
     Task *taskById(const QStringRef &id);
     QQmlListProperty<Task> tasks();
     QQmlListProperty<Connection> connections();
-    QStringList interfaces() const;
     int connectionIndex() const { return connectionIndex_; }
 
 public slots:
@@ -38,7 +36,6 @@ public slots:
 signals:
     void tasksChanged(QQmlListProperty<Task> tasks);
     void connectionsChanged(QQmlListProperty<Connection> connections);
-    void interfacesChanged(QStringList interfaces);
     void connectionIndexChanged(int connectionIndex);
 
 private:
@@ -54,7 +51,6 @@ private:
 
     QVector<Task *> tasks_;
     QVector<Connection *> connections_;
-    QStringList m_interfaces;
     int connectionIndex_;
     bool settingsSaved;
     const QString settingsFile_;

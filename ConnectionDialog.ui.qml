@@ -15,7 +15,7 @@ Dialog {
         address: editor.address
         port: editor.port
         listenPort: editor.listenPort
-        listenIf: backend.interfaces[editor.listenIfIdx]
+        listenIf: editor.listenIf
     }
 
     ColumnLayout {
@@ -26,7 +26,6 @@ Dialog {
             //anchors.fill: parent
             id: editor
             showName: true
-            interfaces: backend.interfaces
         }
         Row {
             spacing: 20
@@ -53,16 +52,16 @@ Dialog {
     Connections {
         target: cancelButton
         onClicked: {
-            connection.unbind();
-            newDialog.close();
+            connection.unbind()
+            newDialog.close()
         }
     }
 
     Connections {
         target: createButton
         onClicked: {
-            connection.unbind();
-            newDialog.accept();
+            connection.unbind()
+            newDialog.accept()
         }
     }
 
@@ -75,9 +74,10 @@ Dialog {
         target: connection
         onPingOk: {
             if (connection.state === Connection.Active) {
-                editor.name = host;
-                editor.address = remoteIf;
-            } else if (editor.name === "") editor.name = host
+                editor.name = host
+                editor.address = remoteIf
+            } else if (editor.name === "")
+                editor.name = host
         }
     }
 }
