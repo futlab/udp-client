@@ -1,4 +1,5 @@
 import QtQuick 2.8
+//import QtQml 2.2
 import QtQuick.Controls 2.2
 import QtQuick.Window 2.3
 import QtQuick.Layouts 1.3
@@ -26,20 +27,61 @@ Pane {
                 backend: form.backend
             }
         }
+        TabBar {
+            id: bar
+            TabButton {
+                text: qsTr("TASKS")
+                width: 80
+            }
+            TabButton {
+                text: qsTr("SCANS")
+                width: 80
+            }
+        }
 
-        GroupBox {
+        StackLayout {
             id: tasksBox
-            padding: 5
+            //padding: 5
             Layout.fillHeight: true
             Layout.fillWidth: true
-            title: qsTr("Tasks")
+            currentIndex: bar.currentIndex
 
+            //title: qsTr("Tasks")
             TasksView {
                 anchors.fill: parent
                 id: tasksView
                 connection: currentConnection
                 backend: form.backend
             }
+            Loader {
+                id: loader
+                sourceComponent: empty
+            }
+
+            /*ScanView {
+                //anchors.fill: parent
+
+            }*/
+        }
+    }
+
+    Connections {
+        target: tasksBox
+        onCurrentIndexChanged: {
+            if (this.target.currentIndex === 1)
+                loader.sourceComponent = scanView
+        }
+    }
+    Component {
+        id: empty
+        Item {
+
+        }
+    }
+    Component {
+        id: scanView
+        ScanView {
+
         }
     }
 }

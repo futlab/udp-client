@@ -51,7 +51,7 @@ private:
     static Connection *connection(QQmlListProperty<Connection>* list, int i);
     static int connectionCount(QQmlListProperty<Connection>* list);
 
-    static void appendTask(QQmlListProperty<Task>* list, Task *c);
+    static void appendTask(QQmlListProperty<Task>*, Task *);
     static void clearTasks(QQmlListProperty<Task>* list);
     static Task *task(QQmlListProperty<Task>* list, int i);
     static int taskCount(QQmlListProperty<Task>* list);

@@ -229,7 +229,7 @@ int BackEnd::connectionCount(QQmlListProperty<Connection> *list)
 
 // static Tasks handlers
 
-void BackEnd::appendTask(QQmlListProperty<Task> *list, Task *c) {
+void BackEnd::appendTask(QQmlListProperty<Task> *, Task *) {
     //reinterpret_cast<BackEnd*>(list->data)->tasks_.append(*c);
 }
 

@@ -17,5 +17,6 @@
         <file>LaunchButton.ui.qml</file>
         <file>EditableComboBox.ui.qml</file>
         <file>IfComboBox.qml</file>
+        <file>ScanView.qml</file>
     </qresource>
 </RCC>
