@@ -4,6 +4,7 @@ project(udp-client)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io)
@@ -17,6 +18,7 @@ set(SOURCE
 	include/scan.h			src/scan.cpp
 	include/connection.h	src/connection.cpp
 	include/interfaces.h	src/interfaces.cpp
+	qml/qml.qrc
 )
 
 set(QML
