@@ -152,9 +152,11 @@ QQmlListProperty<Connection> BackEnd::connections()
 void BackEnd::setConnectionIndex(int connectionIndex)
 {
     if (connectionIndex_ == connectionIndex) return;
-    connections_[connectionIndex_]->unbind();
+    if (connectionIndex_ >= 0 && connectionIndex_ < connections_.size())
+        connections_[connectionIndex_]->unbind();
     connectionIndex_ = connectionIndex;
-    connections_[connectionIndex]->bind();
+    if (connectionIndex >= 0)
+        connections_[connectionIndex]->bind();
     for (auto t : tasks_)
         t->setState(Task::Stop);
     emit connectionIndexChanged(connectionIndex_);
