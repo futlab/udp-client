@@ -7,23 +7,12 @@
 void Connection::ping()
 {
     setState(Wait);
-    QString data = QString("ping %1").arg(listenPort_);
-    QHostAddress address(address_);
-    socket_.writeDatagram(data.toLocal8Bit(), address, port_);
+    write(QString("ping %1").arg(listenPort_));
 }
 
 void Connection::queryList()
 {
-    QString data = QString("list %1").arg(listenPort_);
-    QHostAddress address(address_);
-    socket_.writeDatagram(data.toLocal8Bit(), address, port_);
-}
-
-QString parseIf(const QString &name)
-{
-    int i = name.indexOf(':');
-    if (i < 0) return name;
-    return name.mid(0, i);
+    write(QString("list %1").arg(listenPort_));
 }
 
 void Connection::launch(Task *task)
@@ -33,31 +22,26 @@ void Connection::launch(Task *task)
     task->setId(id);
     QString param = task->useRos() ? task->launchFile() : task->command();
     param.replace("#remote", address_);
-    param.replace("#local", parseIf(this->listenIf_));
-    QString data = QString(task->useRos() ? "roslaunch %1 %2 %3" : "launch %1 %2 %3").arg(listenPort_).arg(id).arg(param);
-    socket_.writeDatagram(data.toLocal8Bit(), QHostAddress(address_), port_);
+    param.replace("#local", interface_->address().toString());
+    write(QString(task->useRos() ? "roslaunch %1 %2 %3" : "launch %1 %2 %3").arg(listenPort_).arg(id).arg(param));
 }
 
 void Connection::stop(Task *task)
 {
-    QString data = QString("stop %1 %2").arg(listenPort_).arg(task->id());
-    socket_.writeDatagram(data.toLocal8Bit(), QHostAddress(address_), port_);
+    write(QString("stop %1 %2").arg(listenPort_).arg(task->id()));
 }
 
 void Connection::kill(Task *task)
 {
-    QString data = QString("kill %1 %2").arg(listenPort_).arg(task->id());
-    socket_.writeDatagram(data.toLocal8Bit(), QHostAddress(address_), port_);
+    write(QString("kill %1 %2").arg(listenPort_).arg(task->id()));
 }
 
-Connection::Connection(QObject *parent) : QObject(parent), backend_(nullptr), state_(Active) {
-    connect(&socket_, SIGNAL(readyRead()), SLOT(read()));
+Connection::Connection(QObject *parent) : QObject(parent), interface_(nullptr), backend_(nullptr), state_(Active) {
 }
 
-Connection::Connection(const QString &name, const QString &address, int port, const QString &listenIf, int listenPort, BackEnd *parent) :
-    QObject(parent), name_(name), address_(address), listenIf_(listenIf), port_(port), listenPort_(listenPort), backend_(parent)
+Connection::Connection(const QString &name, const QString &address, int port, Interface *listenIf, int listenPort, BackEnd *parent) :
+    QObject(parent), name_(name), address_(address), interface_(listenIf), port_(port), listenPort_(listenPort), backend_(parent)
 {
-    connect(&socket_, SIGNAL(readyRead()), SLOT(read()));
     bind();
 }
 
@@ -98,18 +82,22 @@ void Connection::setListenPort(int listenPort)
     bind();
 }
 
-void Connection::bind()
-{
-    QHostAddress a = (listenIf_ == "Any") ? QHostAddress::Any : QHostAddress(listenIf_);
-    if (socket_.state() != QAbstractSocket::UnconnectedState) socket_.abort();
-    setState(socket_.bind(a, listenPort_) ? Active : Error);
-}
-
 void Connection::setState(State state)
 {
     if (state == state_) return;
     state_ = state;
     emit stateChanged(state);
+}
+
+void Connection::write(const QByteArray &data)
+{
+    QHostAddress address(address_);
+    interface_->write(data, address, port_);
+}
+
+void Connection::write(const QByteArray &data, const QHostAddress &address)
+{
+    interface_->write(data, address, port_);
 }
 
 class WordParser
@@ -134,12 +122,8 @@ public:
     }
 };
 
-void Connection::read()
+void Connection::onRead(const QByteArray &datagram, const QHostAddress &address)
 {
-    QByteArray datagram;
-    datagram.resize(socket_.pendingDatagramSize());
-    QHostAddress address;
-    socket_.readDatagram(datagram.data(), datagram.size(), &address);
     WordParser args(datagram);
     QStringRef head = args.get();
     if (head.isEmpty()) return;
@@ -200,17 +184,29 @@ void Connection::read()
 
 void Connection::setListenIf(QString listenIf)
 {
-    if (listenIf_ == listenIf)
+    if (interface_ && interface_->name() == listenIf)
         return;
-
-    listenIf_ = listenIf;
-    emit listenIfChanged(listenIf_);
+    if (interface_)
+        interface_->unbind();
+    if (listenIf == "") {
+        interface_ = nullptr;
+        emit listenIfChanged("");
+        return;
+    }
+    interface_ = backend_->interfaceByName(listenIf);
+    emit listenIfChanged(interface_->name());
     bind();
+}
+
+void Connection::bind()
+{
+    if (interface_)
+        setState(interface_->bind(this, listenPort_) ? Active : Error);
 }
 
 void Connection::unbind()
 {
-    if (socket_.state() != QAbstractSocket::UnconnectedState) socket_.abort();
+    interface_->unbind();
     setState(Off);
 }
 
@@ -218,15 +214,68 @@ void Connection::scan()
 {
     setState(Active);
     QByteArray datagram = QString("ping %1").arg(listenPort_).toLocal8Bit();
-    qint32 local = QHostAddress(listenIf_).toIPv4Address();
-    for (qint32 ip = (local & 0xFFFFFF00); ip < (local | 0xFF); ip++)
-        if (ip != local)
-            socket_.writeDatagram(datagram, QHostAddress(ip), port_);
+    qint32 local = interface_->address().toIPv4Address();
+    for (qint32 ip = (local & 0xFFFFFF00) + 1; ip < (local | 0xFF); ip++)
+        if (ip != local) {
+            QHostAddress address(ip);
+            write(datagram, address);
+        }
 }
 
 void Connection::queryTasks()
 {
-    QString data = QString("tasks %1").arg(listenPort_);
-    QHostAddress address(address_);
-    socket_.writeDatagram(data.toLocal8Bit(), address, port_);
+    write(QString("tasks %1").arg(listenPort_));
+}
+
+void Connection::setBackend(BackEnd *backend)
+{
+    if (backend_ == backend)
+        return;
+
+    backend_ = backend;
+    emit backendChanged(backend_);
+}
+
+QHostAddress Interface::parseAddr(const QString &name)
+{
+    if (name == "Any")
+        return QHostAddress::Any;
+    int i = name.indexOf(':');
+    if (i < 0) return QHostAddress(name);
+    return QHostAddress(name.mid(0, i));
+}
+
+Interface::Interface(const QString &name) : name_(name), address_(parseAddr(name)), active_(nullptr)
+{
+    connect(&socket_, SIGNAL(readyRead()), SLOT(read()));
+}
+
+const QHostAddress &Interface::address() const
+{
+    return address_;
+}
+
+bool Interface::bind(Connection *connection, int listenPort)
+{
+    active_ = connection;
+    auto state = socket_.state();
+    if (state != QAbstractSocket::UnconnectedState)
+        socket_.abort();
+    return socket_.bind(address_, listenPort);
+}
+
+void Interface::unbind()
+{
+    if (socket_.state() != QAbstractSocket::UnconnectedState)
+        socket_.abort();
+}
+
+void Interface::read()
+{
+    QByteArray datagram;
+    datagram.resize(socket_.pendingDatagramSize());
+    QHostAddress address;
+    socket_.readDatagram(datagram.data(), datagram.size(), &address);
+    if (active_)
+        active_->onRead(datagram, address);
 }

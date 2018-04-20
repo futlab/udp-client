@@ -5,6 +5,8 @@
 #include <QString>
 #include <QTimer>
 
+/// Backend for retrieving exists interface list
+
 class Interfaces: public QObject {
     Q_OBJECT
     Q_PROPERTY(QStringList list READ list NOTIFY listChanged)

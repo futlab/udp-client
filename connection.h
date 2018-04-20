@@ -8,6 +8,27 @@
 #include "task.h"
 
 class BackEnd;
+class Connection;
+
+class Interface : public QObject
+{
+    Q_OBJECT
+public:
+    Interface(const QString &name);
+    inline void write(const QByteArray &data, const QHostAddress &address, int port) { socket_.writeDatagram(data, address, port); }
+    inline const QString &name() const { return name_; }
+    const QHostAddress &address() const;
+    bool bind(Connection *connection, int listenPort);
+    void unbind();
+    static QHostAddress parseAddr(const QString &name);
+private:
+    const QString name_;
+    const QHostAddress address_;
+    QUdpSocket socket_;
+    Connection *active_;
+private slots:
+    void read();
+};
 
 class Connection : public QObject
 {
@@ -20,6 +41,7 @@ class Connection : public QObject
     Q_PROPERTY(int port READ port WRITE setPort NOTIFY portChanged)
     Q_PROPERTY(int listenPort READ listenPort WRITE setListenPort NOTIFY listenPortChanged)
     Q_PROPERTY(QStringList launchFiles READ launchFiles NOTIFY launchFilesChanged)
+    Q_PROPERTY(BackEnd *backend READ backend WRITE setBackend NOTIFY backendChanged)
 
 public:
     Q_INVOKABLE void ping();
@@ -29,7 +51,7 @@ public:
     Q_INVOKABLE void kill(Task *task);
 
     Connection(QObject *parent = nullptr);
-    Connection(const QString &name, const QString &address, int port, const QString &listenIf, int listenPort, BackEnd *parent);
+    Connection(const QString &name, const QString &address, int port, Interface *listenIf, int listenPort, BackEnd *parent);
     ~Connection();
 
     enum State { Active, Wait, Pinged, Error, Off };
@@ -37,21 +59,23 @@ public:
     QString address() const { return address_; }
     int port() const { return port_; }
     int listenPort() const { return listenPort_; }
-    QString listenIf() const { return listenIf_; }
+    QString listenIf() const { return interface_->name(); }
     QStringList launchFiles() const { return launchFiles_; }
     inline State state() const { return state_; }
+    BackEnd *backend() const { return backend_; }
 
 public slots:
     void setName(QString name);
     void setAddress(QString address);
     void setPort(int port);
     void setListenPort(int listenPort);
-    void read();
+    void onRead(const QByteArray &datagram, const QHostAddress &address);
     void setListenIf(QString listenIf);
-    void unbind();
     void bind();
+    void unbind();
     void scan();
     void queryTasks();
+    void setBackend(BackEnd *backend);
 
 signals:
     void nameChanged(QString name);
@@ -62,14 +86,19 @@ signals:
     void listenIfChanged(QString listenIf);
     void launchFilesChanged(QStringList launchFiles);
     void stateChanged(State state);
+    void backendChanged(BackEnd *backend);
+
 private:
-    QString name_, address_, listenIf_;
+    QString name_, address_;
+    Interface *interface_;
     int port_, listenPort_;
     QStringList launchFiles_;
-    QUdpSocket socket_;
-    BackEnd * const backend_;
+    BackEnd * backend_;
     State state_;
     void setState(State state);
+    inline void write(const QString &data) { write(data.toLocal8Bit()); }
+    void write(const QByteArray &data);
+    void write(const QByteArray &data, const QHostAddress &address);
 };
 
 #endif // CONNECTION_H

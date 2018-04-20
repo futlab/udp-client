@@ -46,7 +46,7 @@ Pane {
                     text: "Unable to bind"
                     color: "red"
                     anchors.fill: parent
-                    verticalAlignment: Text.AlignVCenter //currentConnection.errorMessage
+                    verticalAlignment: Text.AlignVCenter
                     visible: currentConnection
                              && currentConnection.state === Connection.Error
                 }
@@ -98,6 +98,7 @@ Pane {
     ConnectionDialog {
         id: newDialog
         visible: false
+        backend: form.backend
     }
     Connections {
         target: newButton
@@ -106,6 +107,8 @@ Pane {
             ne.listenPort = listenPortCtr++
             ne.name = ''
             ne.address = ''
+            if (ne.listenIf === '')
+                ne.listenIf = editor.listenIf
             newDialog.visible = true
         }
     }

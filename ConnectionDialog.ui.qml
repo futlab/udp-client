@@ -2,28 +2,33 @@ import QtQuick 2.4
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 import QtQuick.Dialogs 1.2
+import QtQuick.Controls.Material 2.2
 import udp_client.backend 1.0
 
 Dialog {
-    id: newDialog
+    id: dialog
     property alias editor: editor
     title: "Add new connection"
     visible: false
     standardButtons: Dialog.NoButton // StandardButton.Save | StandardButton.Cancel
+    Material.theme: Material.Light
+    Material.accent: Material.Teal
+
+    property BackEnd backend
+
     Connection {
         id: connection
+        backend: dialog.backend
         address: editor.address
         port: editor.port
         listenPort: editor.listenPort
         listenIf: editor.listenIf
     }
-
     ColumnLayout {
         anchors.fill: parent
         ConnectionEditor {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            //anchors.fill: parent
             id: editor
             showName: true
         }

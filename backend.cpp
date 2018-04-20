@@ -12,7 +12,7 @@ void BackEnd::removeConnection(int idx)
 int BackEnd::appendConnection(const QString &name, const QString &address, int port, const QString &listenIf, int listenPort)
 {
     int r = connections_.length();
-    auto c = new Connection(name, address, port, listenIf, listenPort, this);
+    auto c = new Connection(name, address, port, interfaceByName(listenIf), listenPort, this);
     connections_.append(c);
     emit connectionsChanged(connections());
     saveSettings();
@@ -48,7 +48,7 @@ BackEnd::BackEnd(QObject *parent) :
                     settings.value("name").toString(),
                     settings.value("address").toString(),
                     settings.value("port").toInt(),
-                    settings.value("listenIf").toString(),
+                    interfaceByName(settings.value("listenIf").toString()),
                     settings.value("listenPort").toInt(),
                     this);
         connections_.append(c);
@@ -250,4 +250,16 @@ Task *BackEnd::task(QQmlListProperty<Task> *list, int i)
 int BackEnd::taskCount(QQmlListProperty<Task> *list)
 {
     return reinterpret_cast<BackEnd*>(list->data)->tasks_.length() + 1;
+}
+
+Interface *BackEnd::interfaceByName(const QString &name)
+{
+    string address = Interface::parseAddr(name).toString().toStdString();
+    auto it = interfaces_.find(address);
+    if (it == interfaces_.end()) {
+        auto pIf = new Interface(name);
+        interfaces_.emplace(address, unique_ptr<Interface>(pIf));
+        return pIf;
+    } else
+        return it->second.get();
 }

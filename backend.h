@@ -6,9 +6,13 @@
 #include <QVector>
 #include <QQmlListProperty>
 #include <QTimer>
+#include <map>
+#include <memory>
 
 #include "task.h"
 #include "connection.h"
+
+using namespace std;
 
 class BackEnd : public QObject
 {
@@ -21,6 +25,7 @@ public:
     Q_INVOKABLE int appendConnection(const QString &name, const QString &address, int port, const QString &listenIf, int listenPort);
     Q_INVOKABLE void removeTask(int idx);
     Q_INVOKABLE int appendTask(const QString &name, bool userRos, const QString &command, const QString &launchFile);
+
     explicit BackEnd(QObject *parent = nullptr);
     ~BackEnd();
 
@@ -31,6 +36,7 @@ public:
     QQmlListProperty<Connection> connections();
     int connectionIndex() const { return connectionIndex_; }
     QVector<bool> activeTasks() const;
+    Interface *interfaceByName(const QString &name);
 
 public slots:
     void setConnectionIndex(int connectionIndex);
@@ -58,6 +64,7 @@ private:
 
     QVector<Task *> tasks_;
     QVector<Connection *> connections_;
+    map<string, unique_ptr<Interface>> interfaces_;
     int connectionIndex_;
     bool settingsSaved;
     const QString settingsFile_;
