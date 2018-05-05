@@ -1,7 +1,8 @@
-import QtQuick 2.4
+import QtQuick 2.9
 import QtQuick.Controls 2.2
 import QtQuick.Layouts 1.3
 import QtQuick.Dialogs 1.2
+import QtQuick.Controls.Material 2.2
 import udp_client.backend 1.0
 
 Pane {
@@ -11,6 +12,9 @@ Pane {
     property Connection currentConnection: backend.connections[comboBox.currentIndex]
     property int listenPortCtr: 5555
     property bool expanded: false
+    leftPadding: 5
+    padding: 0
+    Material.theme: Material.Dark
 
     ColumnLayout {
         id: column
@@ -26,16 +30,18 @@ Pane {
 
             ComboBox {
                 id: comboBox
-                width: 200
+                width: 250
                 textRole: "name"
                 model: backend.connections
                 currentIndex: backend.connectionIndex
+                Material.theme: Material.Dark
             }
 
             PingButton {
                 id: pingButton
                 connection: enabled ? backend.connections[comboBox.currentIndex] : null
-                enabled: comboBox.currentIndex >= 0
+                enabled: currentConnection
+                         && currentConnection.state !== Connection.Error
             }
 
             Item {
@@ -74,7 +80,10 @@ Pane {
                 Layout.alignment: Qt.AlignRight | Qt.AlignBottom
             }
         }
-
+        /*Frame {
+            id: editorFrame
+            visible: false
+            Layout.fillWidth: true*/
         ConnectionEditor {
             id: editor
             visible: false
@@ -93,6 +102,7 @@ Pane {
             onListenIfChanged: if (enabled)
                                    backend.connections[comboBox.currentIndex].listenIf = listenIf
         }
+        //}
     }
 
     ConnectionDialog {
@@ -154,6 +164,10 @@ Pane {
                 target: editor
                 visible: true
             }
+            /*PropertyChanges {
+                target: editorFrame
+                visible: true
+            }*/
             PropertyChanges {
                 target: expandButton
                 text: "▲"

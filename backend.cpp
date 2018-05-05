@@ -1,4 +1,6 @@
 #include "backend.h"
+#include <QDate>
+#include <QLocale>
 #include <QSettings>
 #include <QStandardPaths>
 
@@ -37,7 +39,8 @@ int BackEnd::appendTask(const QString &name, bool useRos, const QString &command
 }
 
 BackEnd::BackEnd(QObject *parent) :
-    QObject(parent), settingsSaved(true), settingsFile_(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/udp-client.ini")
+    QObject(parent), settingsSaved(true), settingsFile_(QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation) + "/udp-client.ini"),
+    bags_(this, "bag")
 {
     QSettings settings(settingsFile_, QSettings::IniFormat);
     connectionIndex_ = settings.value("connectionIndex", QVariant(-1)).toInt();
@@ -73,7 +76,7 @@ BackEnd::BackEnd(QObject *parent) :
     connect(this, SIGNAL(connectionsChanged(QQmlListProperty<Connection>)), SLOT(settingsChanged()));
 
     connect(&timer_, SIGNAL(timeout()), this, SLOT(updateTasks()));
-    timer_.start(5000);
+    timer_.start(2000);
 }
 
 BackEnd::~BackEnd()
@@ -129,6 +132,18 @@ void BackEnd::activateTasks(const QStringList &ids, const QVector<int> idxs)
     for (int i = 0; i < l; i++)
         if (active[i])
             tasks_[i]->setState(Task::Stop);
+}
+
+QString BackEnd::buildInfo()
+{
+    char s_month[5];
+    int month, day, year;
+    static const char monthNames[] = "JanFebMarAprMayJunJulAugSepOctNovDec";
+
+    sscanf(__DATE__, "%s %d %d", s_month, &day, &year);
+
+    month = (strstr(monthNames, s_month) - monthNames) / 3;
+    return QDate(year, month, day).toString("dd.MM.yyyy");
 }
 
 QQmlListProperty<Task> BackEnd::tasks()
@@ -231,7 +246,7 @@ int BackEnd::connectionCount(QQmlListProperty<Connection> *list)
 
 // static Tasks handlers
 
-void BackEnd::appendTask(QQmlListProperty<Task> *list, Task *c) {
+void BackEnd::appendTask(QQmlListProperty<Task> *, Task *) {
     //reinterpret_cast<BackEnd*>(list->data)->tasks_.append(*c);
 }
 
@@ -262,4 +277,27 @@ Interface *BackEnd::interfaceByName(const QString &name)
         return pIf;
     } else
         return it->second.get();
+}
+
+void BackEnd::subscribe(const QString &id, Subscriber *subscriber)
+{
+    string sId = "@" + id.toStdString();
+    auto it = subscribers_.find(sId);
+    if (it == subscribers_.end())
+        subscribers_.emplace(sId, subscriber);
+    else
+        it->second = subscriber;
+}
+
+Subscriber *BackEnd::findSubscriber(const QStringRef &id)
+{
+    auto it = subscribers_.find(id.toString().toStdString());
+    return (it == subscribers_.end()) ? nullptr : it->second;
+}
+
+Connection *BackEnd::activeConnection()
+{
+    if (connectionIndex_ < 0)
+        return nullptr;
+    return connections_[connectionIndex_];
 }

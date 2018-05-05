@@ -17,5 +17,7 @@
         <file>LaunchButton.ui.qml</file>
         <file>EditableComboBox.ui.qml</file>
         <file>IfComboBox.qml</file>
+        <file>BagsView.ui.qml</file>
     </qresource>
+    <qresource prefix="/Controls"/>
 </RCC>

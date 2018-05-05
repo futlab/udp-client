@@ -63,13 +63,14 @@ public:
     QStringList launchFiles() const { return launchFiles_; }
     inline State state() const { return state_; }
     BackEnd *backend() const { return backend_; }
+    void writeCmd(const QString &cmd, const QString &body);
 
 public slots:
     void setName(QString name);
     void setAddress(QString address);
     void setPort(int port);
     void setListenPort(int listenPort);
-    void onRead(const QByteArray &datagram, const QHostAddress &address);
+    void onRead(const QByteArray &datagram, const QHostAddress &);
     void setListenIf(QString listenIf);
     void bind();
     void unbind();

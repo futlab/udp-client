@@ -16,7 +16,9 @@ SOURCES += main.cpp \
     backend.cpp \
     task.cpp \
     connection.cpp \
-    interfaces.cpp
+    interfaces.cpp \
+    files.cpp \
+    subscriber.cpp
 
 RESOURCES += qml.qrc
 
@@ -35,7 +37,9 @@ HEADERS += \
     backend.h \
     task.h \
     connection.h \
-    interfaces.h
+    interfaces.h \
+    files.h \
+    subscriber.h
 
 DISTFILES +=
 

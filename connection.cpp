@@ -2,7 +2,7 @@
 
 #include "connection.h"
 #include "backend.h"
-
+#include "subscriber.h"
 
 void Connection::ping()
 {
@@ -89,6 +89,11 @@ void Connection::setState(State state)
     emit stateChanged(state);
 }
 
+void Connection::writeCmd(const QString &cmd, const QString &body)
+{
+    write(QString("%1 %2 %3").arg(cmd).arg(listenPort_).arg(body));
+}
+
 void Connection::write(const QByteArray &data)
 {
     QHostAddress address(address_);
@@ -100,29 +105,7 @@ void Connection::write(const QByteArray &data, const QHostAddress &address)
     interface_->write(data, address, port_);
 }
 
-class WordParser
-{
-    const QString data;
-    const QChar *d, *e;
-public:
-    WordParser(const QByteArray &bytes) : data(bytes), d(data.data()), e(d + data.length()) {}
-    WordParser(const QString &str) : data(str), d(data.data()), e(d + data.length()) {}
-    QStringRef get(const QChar c = ' ') {
-        if (d < e && *d <= ' ') d++;
-        if (d >= e) return QStringRef();
-        const QChar *f = d;
-        while (d < e && *d > c) d++;
-        return QStringRef(&data, f - data.data(), d - f);
-    }
-    QStringRef all() {
-        if (d < e && *d <= ' ') d++;
-        if (e > d && e[-1] < ' ') e--;
-        if (d >= e) return QStringRef();
-        return QStringRef(&data, d - data.data(), e - d);
-    }
-};
-
-void Connection::onRead(const QByteArray &datagram, const QHostAddress &address)
+void Connection::onRead(const QByteArray &datagram, const QHostAddress &)
 {
     WordParser args(datagram);
     QStringRef head = args.get();
@@ -178,6 +161,9 @@ void Connection::onRead(const QByteArray &datagram, const QHostAddress &address)
         } else if (head.at(0) == '#') {
             if (Task *task = backend_->taskById(head))
                 task->logLine(args.all());
+        } else if (head.at(0) == '@') {
+            if (Subscriber *subscriber = backend_->findSubscriber(head))
+                subscriber->pushData(args);
         }
     }
 }

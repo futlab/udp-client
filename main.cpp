@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
 
     qmlRegisterType<BackEnd>("udp_client.backend", 1, 0, "BackEnd");
     qmlRegisterType<Connection>("udp_client.backend", 1, 0, "Connection");
+    qmlRegisterType<Files>("udp_client.backend", 1, 0, "Files");
     qmlRegisterType<Task>("udp_client.backend", 1, 0, "Task");
     qmlRegisterType<Interfaces>("udp_client.backend", 1, 0, "Interfaces");
 

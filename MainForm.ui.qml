@@ -8,38 +8,83 @@ Pane {
     id: form
     property BackEnd backend
     property alias currentConnection: connectionForm.currentConnection
-
+    padding: 0
     ColumnLayout {
         id: column
         anchors.fill: parent
         spacing: 10
 
-        GroupBox {
+        /*GroupBox {
             id: connectGroupBox
             padding: 5
             Layout.fillWidth: true
-            title: qsTr("Connection")
-
-            ConnectionForm {
-                id: connectionForm
-                anchors.fill: parent
-                backend: form.backend
-            }
+            title: qsTr("Connection")*/
+        ConnectionForm {
+            id: connectionForm
+            Layout.fillWidth: true
+            //anchors.fill: parent
+            backend: form.backend
         }
 
-        GroupBox {
-            id: tasksBox
-            padding: 5
-            Layout.fillHeight: true
+        RowLayout {
+            id: barRow
+            width: column.width
             Layout.fillWidth: true
-            title: qsTr("Tasks")
-
+            //Layout.fillWidth: false
+            //Layout.fillWidth: true
+            spacing: 0
+            TabBar {
+                id: bar
+                visible: true
+                currentIndex: 0
+                TabButton {
+                    id: tabButton
+                    width: 200
+                    text: "TASKS"
+                }
+                TabButton {
+                    id: tabButton1
+                    width: 200
+                    text: "BAGS " + backend.bags.count + "/" + backend.bags.totalSize
+                    SignButton {
+                        id: removeBagsButton
+                        text: "×"
+                        anchors.right: parent.right
+                        Layout.alignment: Qt.AlignRight | Qt.AlignBottom
+                    }
+                }
+            }
+            Label {
+                text: "build: " + backend.buildInfo
+                padding: 10
+                horizontalAlignment: Text.AlignRight
+                transformOrigin: Item.Center
+                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                anchors.right: parent.right
+                Layout.fillWidth: true
+            }
+        }
+        StackLayout {
+            id: content
+            visible: true
+            Layout.fillWidth: true
+            currentIndex: bar.currentIndex
             TasksView {
                 anchors.fill: parent
                 id: tasksView
                 connection: currentConnection
                 backend: form.backend
             }
+            BagsView {
+                anchors.fill: parent
+                id: bagsView
+                backend: form.backend
+            }
         }
+    }
+
+    Connections {
+        target: removeBagsButton
+        onClicked: backend.bags.removeAll()
     }
 }
